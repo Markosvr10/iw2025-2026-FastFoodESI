@@ -1,0 +1,17 @@
+{
+  "frontendFolder": "C:/Users/Usuario/Documents/GitHub/iw2025-2026-FastFoodESI/FastFoodESI/FastFoodESI/./src/main/frontend",
+  "themeFolder": "themes",
+  "themeResourceFolder": "C:/Users/Usuario/Documents/GitHub/iw2025-2026-FastFoodESI/FastFoodESI/FastFoodESI/./src/main/frontend/generated/jar-resources",
+  "staticOutput": "C:/Users/Usuario/Documents/GitHub/iw2025-2026-FastFoodESI/FastFoodESI/FastFoodESI/target/classes/META-INF/VAADIN/webapp/VAADIN/static",
+  "generatedFolder": "generated",
+  "statsOutput": "C:\\Users\\Usuario\\Documents\\GitHub\\iw2025-2026-FastFoodESI\\FastFoodESI\\FastFoodESI\\target\\classes\\META-INF\\VAADIN\\config",
+  "frontendBundleOutput": "C:\\Users\\Usuario\\Documents\\GitHub\\iw2025-2026-FastFoodESI\\FastFoodESI\\FastFoodESI\\target\\classes\\META-INF\\VAADIN\\webapp",
+  "devBundleOutput": "C:/Users/Usuario/Documents/GitHub/iw2025-2026-FastFoodESI/FastFoodESI/FastFoodESI/target/dev-bundle/webapp",
+  "devBundleStatsOutput": "C:/Users/Usuario/Documents/GitHub/iw2025-2026-FastFoodESI/FastFoodESI/FastFoodESI/target/dev-bundle/config",
+  "jarResourcesFolder": "C:/Users/Usuario/Documents/GitHub/iw2025-2026-FastFoodESI/FastFoodESI/FastFoodESI/./src/main/frontend/generated/jar-resources",
+  "themeName": "",
+  "clientServiceWorkerSource": "C:\\Users\\Usuario\\Documents\\GitHub\\iw2025-2026-FastFoodESI\\FastFoodESI\\FastFoodESI\\target\\sw.ts",
+  "pwaEnabled": false,
+  "offlineEnabled": false,
+  "offlinePath": "'offline.html'"
+}

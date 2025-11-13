@@ -1,0 +1,14 @@
+# Ignorar carpetas de build de Maven
+target/
+
+# Ignorar archivos de IDE (como .vscode que vi en tu captura)
+.vscode/
+.idea/
+
+# Ignorar logs
+*.log
+
+# Ignarar archivos de configuración de Eclipse
+.project
+.classpath
+.settings/

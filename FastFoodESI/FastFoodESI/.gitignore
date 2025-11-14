@@ -8,7 +8,18 @@ target/
 # Ignorar logs
 *.log
 
-# Ignarar archivos de configuración de Eclipse
+# Ignorar archivos de configuración de Eclipse
 .project
 .classpath
 .settings/
+
+
+# Ignorar archivos de base de datos H2
+*.mv.db
+*.trace.db
+
+# Ignorar archivos generados por Vaadin
+src/main/frontend/generated/
+
+# Ignorar la carpeta de datos de la BBDD
+data/

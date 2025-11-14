@@ -10,9 +10,9 @@ import java.time.LocalDate;
 import java.util.Set;
 import java.util.UUID;
 
-@Entity
-@Table(name = "propietarios")
-public class Propietario {
+@Entity 
+@Table(name = "clientes") 
+public class Cliente {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -31,26 +31,31 @@ public class Propietario {
     @Column(nullable = false, unique = true)
     private String dni;
 
-    @Email(message = "El formato del correo no es válido")
+    @Email(message = "El formato del correo no es válido") 
     @Column(unique = true)
     private String correo;
 
     private String telefono;
 
     @Past(message = "La fecha de nacimiento debe ser en el pasado")
-    private LocalDate fechaNac;
+    private LocalDate fechaNac; 
 
     // --- RELACIONES ---
 
-    @OneToMany(mappedBy = "propietario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Set<Empleado> empleados;
-
-    @OneToMany(mappedBy = "propietario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Set<Negocio> negocios;
+    @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Set<Pedido> pedidos;
 
     // --- CONSTRUCTORES ---
 
-    public Propietario() {
+    public Cliente() {
+    }
+
+    public Cliente(String nombre, String apellido, String dni, String correo, LocalDate fechaNac) {
+        this.nombre = nombre;
+        this.apellido = apellido;
+        this.dni = dni;
+        this.correo = correo;
+        this.fechaNac = fechaNac;
     }
 
     // --- GETTERS Y SETTERS ---
@@ -111,19 +116,11 @@ public class Propietario {
         this.fechaNac = fechaNac;
     }
 
-    public Set<Empleado> getEmpleados() {
-        return empleados;
+    public Set<Pedido> getPedidos() {
+        return pedidos;
     }
 
-    public void setEmpleados(Set<Empleado> empleados) {
-        this.empleados = empleados;
-    }
-
-    public Set<Negocio> getNegocios() {
-        return negocios;
-    }
-
-    public void setNegocios(Set<Negocio> negocios) {
-        this.negocios = negocios;
+    public void setPedidos(Set<Pedido> pedidos) {
+        this.pedidos = pedidos;
     }
 }

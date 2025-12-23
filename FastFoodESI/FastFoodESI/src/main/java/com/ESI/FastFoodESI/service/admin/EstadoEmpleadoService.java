@@ -1,4 +1,4 @@
-package com.ESI.FastFoodESI.service;
+package com.ESI.FastFoodESI.service.admin;
 import com.ESI.FastFoodESI.model.EstadoEmpleado;
 import org.springframework.stereotype.Service;
 import java.util.List;

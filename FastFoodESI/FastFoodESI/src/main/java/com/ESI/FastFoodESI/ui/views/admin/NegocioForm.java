@@ -1,7 +1,7 @@
 package com.ESI.FastFoodESI.ui.views.admin;
 
 import com.ESI.FastFoodESI.model.Negocio;
-import com.ESI.FastFoodESI.service.NegocioService;
+import com.ESI.FastFoodESI.service.admin.NegocioService;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;

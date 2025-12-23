@@ -3,7 +3,7 @@ package com.ESI.FastFoodESI.ui.views.admin;
 import com.ESI.FastFoodESI.model.Negocio;
 import com.ESI.FastFoodESI.model.Propietario; 
 import com.ESI.FastFoodESI.repository.PropietarioRepository;
-import com.ESI.FastFoodESI.service.NegocioService;
+import com.ESI.FastFoodESI.service.admin.NegocioService;
 import com.ESI.FastFoodESI.ui.layouts.admin.PropietarioMainLayout;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;

@@ -15,8 +15,11 @@ target/
 
 
 # Ignorar archivos de base de datos H2
+*.db
 *.mv.db
 *.trace.db
+*.lock.db
+/data/*.db
 
 # Ignorar archivos generados por Vaadin
 src/main/frontend/generated/

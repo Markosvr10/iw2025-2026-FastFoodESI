@@ -4,9 +4,11 @@ import com.ESI.FastFoodESI.model.LineaPedido;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.UUID;
 
 @Repository
 public interface LineaPedidoRepository extends JpaRepository<LineaPedido, UUID> {
-
+    List<LineaPedido> findByPedidoId(UUID pedidoId);
+    List<LineaPedido> findByProductoId(UUID productoId);
 }

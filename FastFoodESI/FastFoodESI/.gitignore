@@ -1,28 +1,39 @@
-# Ignorar carpetas de build de Maven
-target/
-
-# Ignorar archivos de IDE (como .vscode que vi en tu captura)
-.vscode/
+# --- IDEs y Editores ---
 .idea/
-
-# Ignorar logs
-*.log
-
-# Ignorar archivos de configuración de Eclipse
-.project
+.vscode/
+*.swp
+*.iml
 .classpath
+.project
 .settings/
 
+# --- Compilación de Java (Para lo que está dentro de FastFoodESI) ---
+target/
+build/
+bin/
+*.class
+
+# --- Logs y Sistema Operativo ---
+*.log
+.DS_Store
+Thumbs.db
+
+# --- Archivos de Spring Boot ---
+HELP.md
 
 # Ignorar archivos de base de datos H2
 *.db
+# --- Base de Datos H2 local ---
 *.mv.db
 *.trace.db
 *.lock.db
 /data/*.db
 
-# Ignorar archivos generados por Vaadin
+# --- Vaadin Frontend ---
+node_modules/
 src/main/frontend/generated/
+package-lock.json
+webpack.generated.js
 
-# Ignorar la carpeta de datos de la BBDD
+# --- Datos locales ---
 data/

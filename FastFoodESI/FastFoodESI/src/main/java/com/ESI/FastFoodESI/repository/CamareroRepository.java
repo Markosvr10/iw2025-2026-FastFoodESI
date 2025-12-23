@@ -1,11 +1,11 @@
 package com.ESI.FastFoodESI.repository;
 
-import com.ESI.FastFoodESI.model.Tipo;
+import com.ESI.FastFoodESI.model.Camarero;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.UUID;
 
 @Repository
-public interface TipoRepository extends JpaRepository<Tipo, UUID> {
+public interface CamareroRepository extends JpaRepository<Camarero, UUID> {
 }

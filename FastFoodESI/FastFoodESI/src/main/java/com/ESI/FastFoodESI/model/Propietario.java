@@ -35,6 +35,9 @@ public class Propietario {
     @Column(unique = true)
     private String correo;
 
+    @NotBlank(message = "La contraseña es obligatoria")
+    @Column(nullable = false)
+    private String password;
     private String telefono;
 
     @Past(message = "La fecha de nacimiento debe ser en el pasado")
@@ -95,6 +98,14 @@ public class Propietario {
         this.correo = correo;
     }
 
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+    
     public String getTelefono() {
         return telefono;
     }

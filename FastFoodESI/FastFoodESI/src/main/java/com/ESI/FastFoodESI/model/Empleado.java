@@ -11,10 +11,11 @@ import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
+import com.ESI.FastFoodESI.model.Negocio;
 
 @Entity
 @Table(name = "empleados")
-@Inheritance(strategy = InheritanceType.JOINED) // Mantenemos la herencia para Repartidor, Cocina...
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE) // Mantenemos la herencia para Repartidor, Cocina...
 public class Empleado {
 
     @Id
@@ -69,6 +70,10 @@ public class Empleado {
     @JoinColumn(name = "propietario_id", nullable = false)
     private Propietario propietario;
 
+    @NotNull
+    @ManyToOne
+    @JoinColumn(name = "negocio_id")
+    private Negocio negocio;
     // --- CONSTRUCTORES ---
 
     public Empleado() {
@@ -113,7 +118,12 @@ public class Empleado {
     }
 
     public void setCorreo(String correo) {
-        this.correo = correo;
+        // Si el correo viene vacío o solo tiene espacios, lo guardamos como NULL
+        if (correo != null && correo.trim().isEmpty()) {
+            this.correo = null;
+        } else {
+            this.correo = correo;
+        }
     }
 
     public String getTelefono() {
@@ -162,5 +172,13 @@ public class Empleado {
 
     public void setPropietario(Propietario propietario) {
         this.propietario = propietario;
+    }
+
+    public Negocio getNegocio() {
+        return negocio;
+    }
+
+    public void setNegocio(Negocio negocio) {
+        this.negocio = negocio;
     }
 }

@@ -3,7 +3,7 @@ package com.ESI.FastFoodESI.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-
+import jakarta.validation.constraints.NotNull;
 import java.util.Set;
 import java.util.UUID;
 
@@ -22,27 +22,29 @@ public class Negocio {
     @Column(length = 1024)
     private String descripcion;
 
-    @NotBlank(message = "La dirección no puede estar vacía")
+    @NotBlank(message = "La dirección no puede estar vacío")
     @Column(nullable = false)
     private String direccion;
 
+    @NotBlank(message = "El teléfono no puede estar vacío")
+    @Column(nullable = false)
     private String telefono;
 
     @Email(message = "El formato del correo no es válido")
     @Column(unique = true)
     private String correo;
 
-    @Transient // nEmpleados es un valor calculado, no una columna de BBDD
+    @Transient 
     public Integer getnEmpleados() {
-        // La lógica para calcular esto iría en la capa de servicio
         return 0; 
     }
 
-    // --- RELACIONES ---
+   // --- RELACIONES ---
 
-    @OneToOne
-    @JoinColumn(name = "propietario_id", referencedColumnName = "id")
-    private Propietario propietario; // Asumiendo que crearás una @Entity "Propietario"
+    @NotNull(message = "El negocio debe tener un propietario asignado.")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "propietario_id", nullable = false)
+    private Propietario propietario; 
 
     @OneToMany(mappedBy = "negocio", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<Carta> cartas;

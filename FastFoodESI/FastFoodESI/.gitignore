@@ -21,9 +21,13 @@ Thumbs.db
 # --- Archivos de Spring Boot ---
 HELP.md
 
+# Ignorar archivos de base de datos H2
+*.db
 # --- Base de Datos H2 local ---
 *.mv.db
 *.trace.db
+*.lock.db
+/data/*.db
 
 # --- Vaadin Frontend ---
 node_modules/

@@ -2,7 +2,9 @@ package com.ESI.FastFoodESI.ui.views.publico;
 
 import com.ESI.FastFoodESI.model.Producto;
 import com.ESI.FastFoodESI.model.Tipo;
+import com.ESI.FastFoodESI.service.cliente.CarritoService;
 import com.ESI.FastFoodESI.service.cliente.MenuService;
+import com.ESI.FastFoodESI.ui.layout.MainLayout;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -23,50 +25,42 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Route("")
+@Route(value = "", layout = MainLayout.class)
 @PageTitle("Carta | FastFood ESI")
 @AnonymousAllowed
 public class CartaView extends VerticalLayout {
 
     private final MenuService menuService;
-    private List<Producto> todosLosProductos; // almacenamso todos aqui para no estar yendo todo le rato a la BD
+    private final CarritoService carritoService;
+    private List<Producto> todosLosProductos;
 
+    //Componentes ui
     private final FlexLayout contenedorTarjetas;
     private final TextField buscador;
     private final Tabs tabsCategorias;
 
-    public CartaView(MenuService menuService) {
+    //******************************************************************************************************************
+
+    public CartaView(MenuService menuService, CarritoService carritoService) {
         this.menuService = menuService;
+        this.carritoService = carritoService;
+
         this.todosLosProductos = menuService.obtenerTodosLosProductos();
         List<Tipo> categorias = menuService.obtenerTodosLosTipos();
 
-        //Conf layout
+        // configuración visual base
         setSizeFull();
         setPadding(true);
         setSpacing(true);
         setMaxWidth("1200px");
         getStyle().set("margin", "0 auto");
 
-        // --- CABECERA ---
-        H2 titulo = new H2("🍔 FastFoodESI");
-        Button btnCarrito = new Button("Ver Carrito", VaadinIcon.CART.create());
-        btnCarrito.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        btnCarrito.addClickListener(e -> UI.getCurrent().navigate("carrito"));
+        // --- COMPONENTES ---
 
-        Button btnLogin = new Button(VaadinIcon.USER.create());
-        btnLogin.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        btnLogin.addClickListener(e -> UI.getCurrent().navigate("login"));
-
-        HorizontalLayout header = new HorizontalLayout(titulo, btnLogin, btnCarrito);
-        header.setWidthFull();
-        header.expand(titulo);
-        header.setAlignItems(Alignment.CENTER);
-
-        // --- BUSCADOR ---
+        // Buscador
         buscador = new TextField();
         buscador.setPlaceholder("Buscar...");
         buscador.setPrefixComponent(VaadinIcon.SEARCH.create());
@@ -75,27 +69,31 @@ public class CartaView extends VerticalLayout {
         buscador.setValueChangeMode(ValueChangeMode.LAZY);
         buscador.addValueChangeListener(e -> filtrarProductos());
 
-        // --- PESTAÑAS DE CATEGORÍAS ---
+        // Botón Carrito
+        Button btnCarrito = new Button("Ver Carrito", VaadinIcon.CART.create());
+        btnCarrito.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        btnCarrito.addClickListener(e -> UI.getCurrent().navigate("carrito"));
+
+        // Barra Superior
+        HorizontalLayout topBar = new HorizontalLayout(buscador, btnCarrito);
+        topBar.setWidthFull();
+        topBar.setAlignItems(Alignment.CENTER);
+        topBar.expand(buscador);
+
+        // Pestañas
         tabsCategorias = new Tabs();
         tabsCategorias.addThemeVariants(TabsVariant.LUMO_CENTERED);
         tabsCategorias.setWidthFull();
+        tabsCategorias.add(new Tab("Todos"));
 
-        // Pestaña "Todos" (Fija)
-        Tab tabTodos = new Tab("Todos");
-        tabsCategorias.add(tabTodos);
-
-        // Pestañas Dinámicas (Desde la BBDD: Hamburguesas, Bebidas...)
         for (Tipo tipo : categorias) {
             Tab tab = new Tab(tipo.getNombre());
-            // Guardamos el ID o el Nombre en el componente para saber cual es cual
             tab.setId(tipo.getNombre());
             tabsCategorias.add(tab);
         }
-
-        // Listener: Cuando cambias de pestaña, filtramos
         tabsCategorias.addSelectedChangeListener(e -> filtrarProductos());
 
-        // --- CONTENEDOR DE PRODUCTOS ---
+        // Contenedor Tarjetas
         contenedorTarjetas = new FlexLayout();
         contenedorTarjetas.setWidthFull();
         contenedorTarjetas.setFlexWrap(FlexLayout.FlexWrap.WRAP);
@@ -105,34 +103,29 @@ public class CartaView extends VerticalLayout {
         // Carga inicial
         filtrarProductos();
 
-        add(header, buscador, tabsCategorias, contenedorTarjetas);
+        add(topBar, tabsCategorias, contenedorTarjetas);
     }
 
-    // --- LÓGICA DE FILTRADO (Buscador + Pestañas) ---
+    //------------------------------------------------------------------------------------------------------------------
+
     private void filtrarProductos() {
         contenedorTarjetas.removeAll();
 
         String textoBusqueda = buscador.getValue().toLowerCase();
         Tab tabSeleccionado = tabsCategorias.getSelectedTab();
-        String categoriaSeleccionada = tabSeleccionado.getLabel();
+        String categoriaSeleccionada = (tabSeleccionado != null) ? tabSeleccionado.getLabel() : "Todos";
 
         List<Producto> productosFiltrados = todosLosProductos.stream()
                 .filter(p -> {
-                    // 1. Filtro de Texto
                     boolean coincideTexto = p.getNombre().toLowerCase().contains(textoBusqueda);
-
-                    // 2. Filtro de Categoría
                     boolean coincideCategoria = true;
                     if (!"Todos".equals(categoriaSeleccionada)) {
-                        // Si no estamos en "Todos", miramos si el Tipo del producto coincide con la pestaña
                         coincideCategoria = p.getTipo().getNombre().equalsIgnoreCase(categoriaSeleccionada);
                     }
-
                     return coincideTexto && coincideCategoria;
                 })
                 .collect(Collectors.toList());
 
-        // Pintar resultados
         if (productosFiltrados.isEmpty()) {
             contenedorTarjetas.add(new H3("Vaya, no hemos encontrado nada... 😢"));
         } else {
@@ -142,7 +135,8 @@ public class CartaView extends VerticalLayout {
         }
     }
 
-    // --- DISEÑO DE TARJETA ---
+    //------------------------------------------------------------------------------------------------------------------
+
     private Component crearTarjetaProducto(Producto p) {
         Div imagenDiv = new Div();
         imagenDiv.setWidthFull();
@@ -153,7 +147,6 @@ public class CartaView extends VerticalLayout {
         imagenDiv.getStyle().set("justify-content", "center");
         imagenDiv.getStyle().set("border-radius", "12px");
 
-        // Intentamos cargar imagen si es una URL válida, si no, icono
         if (p.getImagenUrl() != null && p.getImagenUrl().startsWith("http")) {
             Image img = new Image(p.getImagenUrl(), p.getNombre());
             img.setWidthFull();
@@ -184,13 +177,17 @@ public class CartaView extends VerticalLayout {
         descripcion.getStyle().set("overflow", "hidden");
         descripcion.setWidth("100%");
 
+        // --- AQUÍ ESTABA EL ERROR ---
+        // Fíjate que AHORA creamos el botón antes de usarlo
         Button btnAdd = new Button("Añadir", VaadinIcon.PLUS.create());
         btnAdd.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         btnAdd.setWidthFull();
         btnAdd.addClickListener(e -> {
-            Notification.show("Añadido: " + p.getNombre())
+            carritoService.anadirProducto(p);
+            Notification.show(p.getNombre() + " añadido al carrito")
                     .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
         });
+        // ----------------------------
 
         VerticalLayout card = new VerticalLayout(imagenDiv, nombre, descripcion, precio, btnAdd);
         card.setPadding(true);

@@ -31,6 +31,9 @@ public class Cliente {
     @Column(nullable = false, unique = true)
     private String dni;
 
+    @Column(nullable = false)
+    private String password;
+
     @Email(message = "El formato del correo no es válido") 
     @Column(unique = true)
     private String correo;
@@ -123,4 +126,7 @@ public class Cliente {
     public void setPedidos(Set<Pedido> pedidos) {
         this.pedidos = pedidos;
     }
+
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 }

@@ -28,6 +28,12 @@ INSERT INTO EMPLEADOS (ID, DTYPE, NOMBRE, APELLIDO, DNI, SALARIO, TURNO_ID, ESTA
 VALUES (random_uuid(), 'Cocina', 'Laura', 'Chef', '22222222D', 1500.00, '22222222-2222-2222-2222-222222222222', '44444444-4444-4444-4444-444444444444', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2');
 
 
+-- CLIENTE DE PRUEBA
+INSERT INTO CLIENTES (ID, NOMBRE, APELLIDO, DNI, CORREO, TELEFONO, PASSWORD)
+VALUES (random_uuid(), 'Pepito', 'Perez', '87654321Z', 'cliente@esi.es', '600123456', '{noop}1234');
+
+
+
 -- 3. Insertar TIPOS DE PRODUCTO (Categorías)
 INSERT INTO TIPOS_PRODUCTO (ID, NOMBRE) VALUES ('c1c1c1c1-c1c1-c1c1-c1c1-c1c1c1c1c1c1', 'Hamburguesas');
 INSERT INTO TIPOS_PRODUCTO (ID, NOMBRE) VALUES ('c2c2c2c2-c2c2-c2c2-c2c2-c2c2c2c2c2c2', 'Bebidas');
@@ -67,3 +73,11 @@ VALUES (random_uuid(), 'Aros de Cebolla', 'Crujientes y dorados', 3.95, 50, 'htt
 
 INSERT INTO PRODUCTOS (ID, NOMBRE, DESCRIPCION, IMPORTE, STOCK, IMAGEN_URL, NEGOCIO_ID, TIPO_ID)
 VALUES (random_uuid(), 'Fanta Naranja', 'Refresco de naranja', 2.00, 200, 'https://dummyimage.com/300x200/000/fff&text=Fanta', 'a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1', 'c2c2c2c2-c2c2-c2c2-c2c2-c2c2c2c2c2c2');
+
+
+-- ESTADOS DEL PEDIDO (Necesarios para que no falle el servicio)
+INSERT INTO estados_pedido (id, nombre) VALUES (random_uuid(), 'RECIBIDO');
+INSERT INTO estados_pedido (id, nombre) VALUES (random_uuid(), 'EN_COCINA');
+INSERT INTO estados_pedido (id, nombre) VALUES (random_uuid(), 'LISTO');
+INSERT INTO estados_pedido (id, nombre) VALUES (random_uuid(), 'ENTREGADO');
+INSERT INTO estados_pedido (id, nombre) VALUES (random_uuid(), 'CANCELADO');

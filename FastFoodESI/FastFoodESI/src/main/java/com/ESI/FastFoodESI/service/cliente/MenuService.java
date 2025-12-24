@@ -16,23 +16,24 @@ public class MenuService {
     private final ProductoRepository productoRepository;
     private final TipoRepository tipoRepository;
 
-    // Inyectamos ambos repositorios
     public MenuService(ProductoRepository productoRepository, TipoRepository tipoRepository) {
         this.productoRepository = productoRepository;
         this.tipoRepository = tipoRepository;
     }
 
+    //productos
     @Transactional(readOnly = true)
     public List<Producto> obtenerTodosLosProductos() {
         return productoRepository.findAll();
     }
 
-    // Pestañas Categoría
+    //categorias
     @Transactional(readOnly = true)
     public List<Tipo> obtenerTodosLosTipos() {
         return tipoRepository.findAll();
     }
 
+    //buscador
     @Transactional(readOnly = true)
     public List<Producto> buscarProductos(String texto) {
         if (texto == null || texto.isEmpty()) {

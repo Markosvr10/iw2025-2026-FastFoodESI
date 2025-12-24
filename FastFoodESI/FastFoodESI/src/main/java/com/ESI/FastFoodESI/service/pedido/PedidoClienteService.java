@@ -1,0 +1,79 @@
+package com.ESI.FastFoodESI.service.pedido;
+
+import com.ESI.FastFoodESI.model.*;
+import com.ESI.FastFoodESI.repository.EstadoPedidoRepository;
+import com.ESI.FastFoodESI.repository.LineaPedidoRepository;
+import com.ESI.FastFoodESI.repository.PedidoRepository;
+import com.ESI.FastFoodESI.service.cliente.CarritoService;
+import com.ESI.FastFoodESI.dto.LineaCarrito;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+public class PedidoClienteService {
+
+    private final PedidoRepository pedidoRepository;
+    private final LineaPedidoRepository lineaPedidoRepository;
+    private final EstadoPedidoRepository estadoPedidoRepository;
+
+    public PedidoClienteService(PedidoRepository pedidoRepository,
+                                LineaPedidoRepository lineaPedidoRepository,
+                                EstadoPedidoRepository estadoPedidoRepository) {
+        this.pedidoRepository = pedidoRepository;
+        this.lineaPedidoRepository = lineaPedidoRepository;
+        this.estadoPedidoRepository = estadoPedidoRepository;
+    }
+
+
+    //metodo de pago
+    @Transactional
+    public Pedido confirmarPedido(CarritoService carrito, Cliente cliente, String tipoEntrega, String metodoPago) {
+
+        Pedido pedido = new Pedido();
+        pedido.setCliente(cliente);
+        pedido.setFechaHora(LocalDateTime.now());
+
+        EstadoPedido estadoInicial = estadoPedidoRepository.findByNombre("RECIBIDO")
+                .orElseThrow(() -> new RuntimeException("Estado 'RECIBIDO' no encontrado"));
+        pedido.setEstado(estadoInicial);
+
+        // Guardamos los datos nuevos
+        pedido.setTipoEntrega(tipoEntrega);
+        pedido.setMetodoPago(metodoPago);
+
+        // Si es tarjeta o paypal simulado, lo marcamos como pagado.
+        // Si es efectivo, lo dejamos como NO pagado (se paga al repartidor).
+        if ("Efectivo".equals(metodoPago)) {
+            pedido.setPagado(false);
+        } else {
+            pedido.setPagado(true);
+        }
+
+        pedido = pedidoRepository.save(pedido);
+
+        for (LineaCarrito item : carrito.getLineas()) {
+            LineaPedido lineaBD = new LineaPedido();
+            lineaBD.setPedido(pedido);
+            lineaBD.setProducto(item.getProducto());
+            lineaBD.setCantidad(item.getCantidad());
+            lineaBD.setPrecioUnitario(item.getProducto().getImporte());
+
+            lineaPedidoRepository.save(lineaBD);
+        }
+
+        return pedido;
+    }
+
+    public List<Pedido> obtenerPedidosDeCliente(Cliente cliente) {
+        List<Pedido> pedidos = pedidoRepository.findByClienteId(cliente.getId());
+
+        return pedidos.stream()
+                .sorted(Comparator.comparing(Pedido::getFechaHora).reversed())
+                .collect(Collectors.toList());
+    }
+}

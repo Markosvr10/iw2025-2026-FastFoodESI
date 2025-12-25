@@ -4,11 +4,16 @@ import com.ESI.FastFoodESI.ui.views.publico.CartaView;
 import com.ESI.FastFoodESI.ui.views.admin.NegociosView;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
-import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.contextmenu.MenuItem;
+import com.vaadin.flow.component.contextmenu.SubMenu;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.menubar.MenuBar;
+import com.vaadin.flow.component.menubar.MenuBarVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.router.RouterLink;
@@ -22,36 +27,40 @@ public class MainLayout extends AppLayout {
     }
 
     private void createHeader() {
-        // Logo y Título
+        //LOGO > carta
         H1 logo = new H1("FastFood ESI");
         logo.getStyle().set("font-size", "20px");
         logo.getStyle().set("margin", "0");
+        logo.getStyle().set("color", "var(--lumo-primary-text-color)");
 
-        // Enlace Carta
-        RouterLink linkCarta = new RouterLink("Carta", CartaView.class);
-        linkCarta.getStyle().set("margin-right", "auto"); // Empuja resto derecha
+        RouterLink linkCarta = new RouterLink(CartaView.class);
+        linkCarta.add(logo);
+        linkCarta.getStyle().set("text-decoration", "none");
 
-        // Layout Base
-        HorizontalLayout header = new HorizontalLayout(new DrawerToggle(), logo, linkCarta);
+        HorizontalLayout header = new HorizontalLayout(linkCarta);
         header.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
         header.setWidthFull();
         header.setPadding(true);
 
-        // Detectar Usuario
+        // --- AUTHENTICATION CHECK ---
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        // Verificar si logueado
         if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
 
-            String rol = auth.getAuthorities().iterator().next().getAuthority(); // Coger Rol
+            //empujar el menú a la derecha
+            Div spacer = new Div();
+            header.add(spacer);
+            header.expand(spacer);
 
-            // MENÚ SEGÚN ROL
+            String rol = auth.getAuthorities().iterator().next().getAuthority();
+
+            // --- MENÚ CENTRAL SEGÚN ROL ---
             switch (rol) {
                 case "ROLE_PROPIETARIO":
-                    header.add(new RouterLink("Panel Admin", com.ESI.FastFoodESI.ui.views.admin.NegociosView.class));
+                    header.add(new RouterLink("Panel Admin", NegociosView.class));
                     break;
                 case "ROLE_CLIENTE":
-                    header.add(new RouterLink("Mis Pedidos", CartaView.class));
+                    // Cliente no tiene enlaces extra en la barra, todo en su perfil
                     break;
                 case "ROLE_MOSTRADOR":
                     header.add(new RouterLink("Mostrador", CartaView.class));
@@ -67,24 +76,64 @@ public class MainLayout extends AppLayout {
                     break;
             }
 
-            // Botón Usuario
-            Button btnUser = new Button(auth.getName(), VaadinIcon.USER.create());
-            btnUser.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+            // Despegable en el perfil
+            MenuBar userMenu = new MenuBar();
+            userMenu.addThemeVariants(MenuBarVariant.LUMO_TERTIARY_INLINE);
 
-            // Botón Salir
-            Button btnLogout = new Button(VaadinIcon.SIGN_OUT.create(), e ->
-                    UI.getCurrent().getPage().setLocation("/logout"));
-            btnLogout.addThemeVariants(ButtonVariant.LUMO_ERROR);
+            MenuItem userItem = userMenu.addItem(createAvatar(auth.getName()));
+            SubMenu subMenu = userItem.getSubMenu();
 
-            header.add(btnUser, btnLogout);
+            // Mi Perfil
+            subMenu.addItem("Mi Perfil", e -> {
+                // UI.getCurrent().navigate(PerfilView.class);
+            });
+
+            //Mis Pedidos
+            subMenu.addItem("Mis Pedidos", e -> {
+                // UI.getCurrent().navigate("mis-pedidos");
+            });
+
+            // separador visual
+            subMenu.add(new Div());
+
+            // CERRAR SESIÓN
+            HorizontalLayout logoutLayout = new HorizontalLayout();
+            logoutLayout.setAlignItems(FlexComponent.Alignment.CENTER);
+            logoutLayout.setSpacing(true);
+
+            Icon iconLogout = VaadinIcon.SIGN_OUT.create();
+            iconLogout.setSize("16px");
+            Span textLogout = new Span("Cerrar Sesión");
+            logoutLayout.getStyle().set("color", "var(--lumo-error-text-color)");
+            logoutLayout.add(iconLogout, textLogout);
+
+            subMenu.addItem(logoutLayout, e ->
+                    // ESTO FUNCIONARÁ AHORA PORQUE HEMOS ACTIVADO EL GET EN SECURITYCONFIG
+                    UI.getCurrent().getPage().setLocation("/logout")
+            );
+
+            header.add(userMenu);
 
         } else {
-            // Usuario Visitante
+            // --- USUARIO NO LOGUEADO ---
+            Div spacer = new Div();
+            header.add(spacer);
+            header.expand(spacer);
+
             Button btnLogin = new Button("Entrar", VaadinIcon.SIGN_IN.create());
             btnLogin.addClickListener(e -> UI.getCurrent().navigate("login"));
             header.add(btnLogin);
         }
 
         addToNavbar(header);
+    }
+
+    // icono + nombre
+    private HorizontalLayout createAvatar(String nombre) {
+        HorizontalLayout hl = new HorizontalLayout();
+        hl.setAlignItems(FlexComponent.Alignment.CENTER);
+        hl.setSpacing(true);
+        hl.add(VaadinIcon.USER.create(), new Span(nombre));
+        return hl;
     }
 }

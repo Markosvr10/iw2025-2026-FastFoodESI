@@ -28,7 +28,7 @@ import java.util.Optional;
 
 @Route(value = "admin/negocios", layout = PropietarioMainLayout.class)
 @PageTitle("Mis Negocios | Admin")
-@RolesAllowed("PROPRIETARIO")
+@RolesAllowed("PROPIETARIO")
 @SpringComponent
 @UIScope
 public class NegociosView extends VerticalLayout {

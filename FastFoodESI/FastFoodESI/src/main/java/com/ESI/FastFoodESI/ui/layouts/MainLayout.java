@@ -1,7 +1,10 @@
 package com.ESI.FastFoodESI.ui.layout;
 
-import com.ESI.FastFoodESI.ui.views.publico.CartaView;
+import com.ESI.FastFoodESI.model.Cliente;
+import com.ESI.FastFoodESI.repository.ClienteRepository;
+import com.ESI.FastFoodESI.security.SecurityService;
 import com.ESI.FastFoodESI.ui.views.admin.NegociosView;
+import com.ESI.FastFoodESI.ui.views.publico.CartaView;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.button.Button;
@@ -17,12 +20,21 @@ import com.vaadin.flow.component.menubar.MenuBarVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.router.RouterLink;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-public class MainLayout extends AppLayout {
+import java.util.Optional;
 
-    public MainLayout() {
+public class MainLayout extends AppLayout {
+    private final SecurityService securityService;
+    private final ClienteRepository clienteRepository;
+
+    public MainLayout(SecurityService securityService, @Autowired ClienteRepository clienteRepository) {
+
+        this.securityService = securityService;
+        this.clienteRepository = clienteRepository;
+
         createHeader();
     }
 
@@ -76,11 +88,19 @@ public class MainLayout extends AppLayout {
                     break;
             }
 
+            // mostrar el nombre real
+            String nombreMostrar = auth.getName(); // Por defecto el correo/username
+            // Buscamos si existe en la tabla clientes para coger su nombre de pila
+            Optional<Cliente> clienteOpt = clienteRepository.findByCorreo(auth.getName());
+            if (clienteOpt.isPresent()) {
+                nombreMostrar = clienteOpt.get().getNombre();
+            }
+
             // Despegable en el perfil
             MenuBar userMenu = new MenuBar();
             userMenu.addThemeVariants(MenuBarVariant.LUMO_TERTIARY_INLINE);
 
-            MenuItem userItem = userMenu.addItem(createAvatar(auth.getName()));
+            MenuItem userItem = userMenu.addItem(createAvatar(nombreMostrar)); //para que muestre el nombre
             SubMenu subMenu = userItem.getSubMenu();
 
             // Mi Perfil

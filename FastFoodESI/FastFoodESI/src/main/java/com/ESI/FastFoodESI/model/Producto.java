@@ -17,6 +17,9 @@ public class Producto {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+    //-----------------------------------------------------------------------------------------------
+    @Column(name = "imagen_url")
+    private String imagenUrl;
 
     @NotBlank(message = "El nombre no puede estar vacío")
     @Column(nullable = false, unique = true)
@@ -55,6 +58,12 @@ public class Producto {
 
     @ManyToMany(mappedBy = "productos", fetch = FetchType.LAZY)
     private Set<Carta> cartas; // Menús en los que aparece este producto
+
+    // -----------------------------------------------------------------------------------------------
+    @NotNull(message = "El producto debe pertenecer a un negocio")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "negocio_id", nullable = false)
+    private Negocio negocio;
 
     // --- CONSTRUCTORES ---
 
@@ -134,4 +143,12 @@ public class Producto {
     public void setCartas(Set<Carta> cartas) {
         this.cartas = cartas;
     }
+
+
+//-----------------------------------------------------------------------------------------------
+    public String getImagenUrl() { return imagenUrl; }
+    public void setImagenUrl(String imagenUrl) { this.imagenUrl = imagenUrl; }
+
+    public Negocio getNegocio() { return negocio; }
+    public void setNegocio(Negocio negocio) { this.negocio = negocio; }
 }

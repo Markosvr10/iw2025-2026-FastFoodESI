@@ -8,6 +8,7 @@ import com.vaadin.flow.router.BeforeEnterObserver;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
+import com.vaadin.flow.component.html.Anchor;
 
 @Route("login") 
 @PageTitle("Iniciar Sesión | FastFoodESI")
@@ -22,10 +23,10 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
         setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.CENTER);
 
-        login.setAction("login"); 
+        login.setAction("login");
 
         VerticalLayout registrationLink = new VerticalLayout(
-            new com.vaadin.flow.component.html.Anchor("registro-propietario", "Crear nueva cuenta")
+                new Anchor("registro", "¿No tienes cuenta? Regístrate aquí")
         );
         registrationLink.setAlignItems(Alignment.CENTER);
 

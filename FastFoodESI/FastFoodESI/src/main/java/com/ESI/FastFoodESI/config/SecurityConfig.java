@@ -2,10 +2,14 @@ package com.ESI.FastFoodESI.config;
 
 import com.ESI.FastFoodESI.ui.views.publico.LoginView;
 import com.vaadin.flow.spring.security.VaadinWebSecurity;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 
 @EnableWebSecurity
 @Configuration
@@ -55,5 +59,15 @@ public class SecurityConfig extends VaadinWebSecurity {
 
 
         super.configure(http);  // activa la seguridad interna de Vaadin y permite que @AnonymousAllowed funcione
+    }
+
+    //LO COMENTO DE MOMENTO, PARA Q LAS CUENTAS DEL data.sql AL NO TENER LAS CONTRASEÑAS ENCRIPTADAS SIGAN FUNCIONANDO
+    /*@Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }*/
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 }

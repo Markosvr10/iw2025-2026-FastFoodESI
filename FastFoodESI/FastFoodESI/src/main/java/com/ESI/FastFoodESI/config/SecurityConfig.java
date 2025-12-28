@@ -5,7 +5,7 @@ import com.vaadin.flow.spring.security.VaadinWebSecurity;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher; // <--- ¡IMPORTANTE!
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @EnableWebSecurity
 @Configuration
@@ -27,6 +27,15 @@ public class SecurityConfig extends VaadinWebSecurity {
             .frameOptions(frame -> frame.sameOrigin()));
 
         super.configure(http); 
+        
         setLoginView(http, "/login"); 
+
+        http.logout(logout -> logout
+            .logoutUrl("/logout")
+            .logoutRequestMatcher(new AntPathRequestMatcher("/logout", "GET"))
+            .logoutSuccessUrl("/login")
+            .invalidateHttpSession(true)
+            .deleteCookies("JSESSIONID")
+        );
     }
 }

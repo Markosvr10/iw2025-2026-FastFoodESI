@@ -2,6 +2,8 @@ package com.ESI.FastFoodESI.ui.layouts.admin;
 
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
+import com.vaadin.flow.component.html.Anchor;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.RouterLink;
@@ -36,13 +38,24 @@ public class PropietarioMainLayout extends AppLayout {
         menu.add(
             new RouterLink("🍔 Mis Negocios", NegociosView.class),
             new RouterLink("🧑‍💼 Empleados", EmpleadosView.class),
-            new RouterLink("📊 Estadísticas", EstadisticasView.class),
-            new RouterLink("📋 Gestión de Carta", ProductosView.class)
+            new RouterLink("📊 Estadísticas", EstadisticasView.class)
         );
         
-        menu.add(
-            new com.vaadin.flow.component.html.Anchor("/logout", "Cerrar Sesión") 
-        );
+        Div spacer = new Div();
+        spacer.getStyle().set("flex-grow", "1");
+        menu.add(spacer);
+        
+        Anchor logoutLink = new Anchor("/logout", "Cerrar Sesión");
+        
+
+        logoutLink.getElement().setAttribute("router-ignore", true);
+        
+        logoutLink.getElement().getStyle().set("color", "var(--lumo-error-text-color)");
+        logoutLink.getElement().getStyle().set("font-weight", "bold");
+        logoutLink.getElement().getStyle().set("margin-bottom", "20px"); 
+
+        menu.add(logoutLink);
+        menu.setSizeFull(); 
 
         addToDrawer(menu);
     }

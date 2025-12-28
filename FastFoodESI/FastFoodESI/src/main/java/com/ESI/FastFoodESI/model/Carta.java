@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.HashSet; 
+import java.util.Objects; 
 import java.util.Set;
 import java.util.UUID;
 
@@ -21,14 +23,13 @@ public class Carta {
     
     // --- RELACIONES ---
 
-
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "carta_productos",
         joinColumns = @JoinColumn(name = "carta_id"), 
         inverseJoinColumns = @JoinColumn(name = "producto_id") 
     )
-    private Set<Producto> productos;
+    private Set<Producto> productos = new HashSet<>(); 
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
@@ -38,6 +39,17 @@ public class Carta {
     // --- CONSTRUCTORES ---
 
     public Carta() {
+    }
+
+    // --- MÉTODOS HELPER  ---
+
+    
+    public void addProducto(Producto producto) {
+        this.productos.add(producto);
+    }
+
+    public void removeProducto(Producto producto) {
+        this.productos.remove(producto);
     }
 
     // --- GETTERS Y SETTERS ---
@@ -72,5 +84,18 @@ public class Carta {
 
     public void setNegocio(Negocio negocio) {
         this.negocio = negocio;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Carta carta = (Carta) o;
+        return Objects.equals(id, carta.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

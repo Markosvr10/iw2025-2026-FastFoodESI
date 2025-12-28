@@ -1,6 +1,23 @@
 package com.ESI.FastFoodESI.model;
 
-import jakarta.persistence.*;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.UUID;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.DiscriminatorType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -8,14 +25,10 @@ import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.UUID;
-import com.ESI.FastFoodESI.model.Negocio;
-
 @Entity
 @Table(name = "empleados")
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE) // Mantenemos la herencia para Repartidor, Cocina...
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING)
 public class Empleado {
 
     @Id
@@ -49,8 +62,6 @@ public class Empleado {
     @Column(nullable = false)
     private BigDecimal salario;
 
-    // --- RELACIONES ---
-
     @NotNull
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "estado_empleado_id", nullable = false)
@@ -61,10 +72,6 @@ public class Empleado {
     @JoinColumn(name = "turno_id", nullable = false)
     private Turno turno;
     
-    /**
-     * Relación Directa: Muchos Empleados pertenecen a un Propietario.
-     * Esta es la entidad "dueña" de la relación.
-     */
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "propietario_id", nullable = false)
@@ -74,13 +81,11 @@ public class Empleado {
     @ManyToOne
     @JoinColumn(name = "negocio_id")
     private Negocio negocio;
-    // --- CONSTRUCTORES ---
 
     public Empleado() {
     }
 
-    // --- GETTERS Y SETTERS ---
-
+    
     public UUID getId() {
         return id;
     }
@@ -118,7 +123,6 @@ public class Empleado {
     }
 
     public void setCorreo(String correo) {
-        // Si el correo viene vacío o solo tiene espacios, lo guardamos como NULL
         if (correo != null && correo.trim().isEmpty()) {
             this.correo = null;
         } else {
@@ -180,5 +184,18 @@ public class Empleado {
 
     public void setNegocio(Negocio negocio) {
         this.negocio = negocio;
+    }
+
+    @Transient 
+    public String getPuesto() {
+        if (this instanceof Cocina) {
+            return "Cocina";
+        } else if (this instanceof Camarero) {
+            return "Camarero";
+        } else if (this instanceof Repartidor) {
+            return "Repartidor";
+        } else {
+            return "Empleado"; 
+        }
     }
 }

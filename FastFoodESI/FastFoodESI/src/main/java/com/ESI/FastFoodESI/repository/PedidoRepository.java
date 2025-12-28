@@ -4,10 +4,12 @@ import com.ESI.FastFoodESI.model.Pedido;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Repository
 public interface PedidoRepository extends JpaRepository<Pedido, UUID> {
     
-
+    long count(); 
+    long countByFechaHoraAfter(LocalDateTime fecha);
 }

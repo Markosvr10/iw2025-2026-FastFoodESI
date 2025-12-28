@@ -24,6 +24,17 @@ public class Pedido {
     @Column(precision = 10, scale = 2)
     private BigDecimal total = BigDecimal.ZERO;
 
+    @Column(name = "tipo_entrega")
+    private String tipoEntrega; // "Mesa", "Domicilio", "Recoger"
+
+    // --- NUEVOS CAMPOS PARA EL PAGO ---
+    @Column(name = "metodo_pago")
+    private String metodoPago; // "TARJETA", "PAYPAL", "EFECTIVO"
+
+    @Column(name = "pagado")
+    private boolean pagado = false;
+
+    // --- RELACIONES ---
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cliente_id")
@@ -81,6 +92,22 @@ public class Pedido {
     public void setTotal(BigDecimal total) {
         this.total = total;
     }
+
+    public String getTipoEntrega() {
+        return tipoEntrega;
+    }
+
+    public void setTipoEntrega(String tipoEntrega) {
+        this.tipoEntrega = tipoEntrega;
+    }
+
+    public String getMetodoPago() { return metodoPago; }
+    public void setMetodoPago(String metodoPago) { this.metodoPago = metodoPago; }
+
+    public boolean isPagado() { return pagado; }
+    public void setPagado(boolean pagado) { this.pagado = pagado; }
+
+
 
     public Cliente getCliente() {
         return cliente;

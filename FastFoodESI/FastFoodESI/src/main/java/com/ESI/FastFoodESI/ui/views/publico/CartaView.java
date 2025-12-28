@@ -4,7 +4,8 @@ import com.ESI.FastFoodESI.model.Producto;
 import com.ESI.FastFoodESI.model.Tipo;
 import com.ESI.FastFoodESI.service.cliente.CarritoService;
 import com.ESI.FastFoodESI.service.cliente.MenuService;
-import com.ESI.FastFoodESI.ui.layout.MainLayout;
+import com.ESI.FastFoodESI.ui.layouts.MainLayout;
+import com.ESI.FastFoodESI.ui.views.admin.NegociosView;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -21,28 +22,33 @@ import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.component.tabs.TabsVariant;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
+import com.vaadin.flow.router.BeforeEnterEvent;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
+import com.vaadin.flow.router.BeforeEnterObserver;
+import org.springframework.security.core.Authentication;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Route(value = "", layout = MainLayout.class)
+import org.springframework.security.core.context.SecurityContextHolder;
+
+@Route(value = "carta", layout = MainLayout.class)
 @PageTitle("Carta | FastFood ESI")
 @AnonymousAllowed
-public class CartaView extends VerticalLayout {
+public class CartaView extends VerticalLayout implements BeforeEnterObserver {
 
     private final MenuService menuService;
     private final CarritoService carritoService;
     private List<Producto> todosLosProductos;
 
-    //Componentes ui
+    // Componentes ui
     private final FlexLayout contenedorTarjetas;
     private final TextField buscador;
     private final Tabs tabsCategorias;
 
-    //******************************************************************************************************************
+    // ******************************************************************************************************************
 
     public CartaView(MenuService menuService, CarritoService carritoService) {
         this.menuService = menuService;
@@ -104,9 +110,10 @@ public class CartaView extends VerticalLayout {
         filtrarProductos();
 
         add(topBar, tabsCategorias, contenedorTarjetas);
+
     }
 
-    //------------------------------------------------------------------------------------------------------------------
+    // ------------------------------------------------------------------------------------------------------------------
 
     private void filtrarProductos() {
         contenedorTarjetas.removeAll();
@@ -135,7 +142,7 @@ public class CartaView extends VerticalLayout {
         }
     }
 
-    //------------------------------------------------------------------------------------------------------------------
+    // ------------------------------------------------------------------------------------------------------------------
 
     private Component crearTarjetaProducto(Producto p) {
         Div imagenDiv = new Div();
@@ -199,5 +206,16 @@ public class CartaView extends VerticalLayout {
         card.getStyle().set("background", "white");
 
         return card;
+    }
+
+    @Override
+    public void beforeEnter(BeforeEnterEvent event) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        // Si el usuario es PROPIETARIO, lo redirigimos a su vista de gestión
+        if (auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_PROPIETARIO"))) {
+            event.forwardTo(NegociosView.class);
+        }
     }
 }

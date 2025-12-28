@@ -9,19 +9,20 @@ import jakarta.annotation.security.PermitAll;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-@Route("") 
-@PermitAll 
+@Route("fff")
+@PermitAll
 public class HomeView extends VerticalLayout implements BeforeEnterObserver {
 
     @Override
     public void beforeEnter(BeforeEnterEvent event) {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        
-        if (auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_PROPRIETARIO"))) {
-            
+
+        if (auth != null
+                && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_PROPRIETARIO"))) {
+
             event.forwardTo(NegociosView.class);
-            
-        } 
+
+        }
     }
 }

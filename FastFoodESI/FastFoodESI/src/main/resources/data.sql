@@ -1,28 +1,142 @@
-INSERT INTO PROPIETARIOS (ID, NOMBRE, APELLIDO, DNI, CORREO, PASSWORD) 
-VALUES ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Juan', 'Dueño', '12345678A', 'juan@esi.es', '{noop}pass123');
+-- ==========================================
+-- 1. CATALOGOS (Tablas maestras)
+-- ==========================================
 
-INSERT INTO PROPIETARIOS (ID, NOMBRE, APELLIDO, DNI, CORREO, PASSWORD) 
-VALUES ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Maria', 'Jefa', '87654321B', 'maria@esi.es', '{noop}pass123');
+-- Cambia TURNOS por turnos
+INSERT INTO turnos (id, nombre) VALUES (random_uuid(), 'Mañana');
+INSERT INTO turnos (id, nombre) VALUES (random_uuid(), 'Tarde');
+INSERT INTO turnos (id, nombre) VALUES (random_uuid(), 'Noche');
 
-INSERT INTO NEGOCIOS (ID, NOMBRE, DIRECCION, TELEFONO, CORREO, PROPIETARIO_ID) 
-VALUES ('a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1', 'Hamburguesas ESI', 'Av. Universidad 1', '956111111', 'burguer@esi.es', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
+-- Cambia ESTADOS_EMPLEADO por estados_empleado
+INSERT INTO estados_empleado (id, nombre) VALUES (random_uuid(), 'Activo');
+INSERT INTO estados_empleado (id, nombre) VALUES (random_uuid(), 'De Baja');
+INSERT INTO estados_empleado (id, nombre) VALUES (random_uuid(), 'Vacaciones');
 
-INSERT INTO NEGOCIOS (ID, NOMBRE, DIRECCION, TELEFONO, CORREO, PROPIETARIO_ID) 
-VALUES ('b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2', 'Pizzería Campus', 'Calle Aulario 5', '956222222', 'pizza@esi.es', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
+-- Estados de Pedido
+INSERT INTO estados_pedido (id, nombre) VALUES (random_uuid(), 'ENTREGADO');
+INSERT INTO estados_pedido (id, nombre) VALUES (random_uuid(), 'PENDIENTE');
 
-INSERT INTO TURNOS (ID, NOMBRE) VALUES ('11111111-1111-1111-1111-111111111111', 'Mañana');
-INSERT INTO TURNOS (ID, NOMBRE) VALUES ('22222222-2222-2222-2222-222222222222', 'Tarde');
-INSERT INTO TURNOS (ID, NOMBRE) VALUES ('33333333-3333-3333-3333-333333333333', 'Noche');
+-- Tipos de Producto
+INSERT INTO tipos_producto (id, nombre) VALUES (random_uuid(), 'Hamburguesa');
+INSERT INTO tipos_producto (id, nombre) VALUES (random_uuid(), 'Bebida');
+INSERT INTO tipos_producto (id, nombre) VALUES (random_uuid(), 'Complemento');
+INSERT INTO tipos_producto (id, nombre) VALUES (random_uuid(), 'Postre');
+
+-- ==========================================
+-- 2. ACTORES (Propietarios, Negocios, Clientes)
+-- ==========================================
+
+-- Propietario PRINCIPAL (Login: admin@esi.es / pass: 1234)
+INSERT INTO propietarios (id, dni, nombre, apellido, correo, password, fecha_nac) 
+VALUES (random_uuid(), '12345678A', 'Jefe', 'Supremo', 'admin@esi.es', '{noop}1234', '1980-01-01');
+
+-- Otros Propietarios (Login: juan@esi.es / pass: pass123)
+INSERT INTO propietarios (id, nombre, apellido, dni, correo, password) 
+VALUES (random_uuid(), 'Juan', 'Dueño', '87654321B', 'juan@esi.es', '{noop}pass123');
+
+-- Clientes
+INSERT INTO clientes (id, dni, nombre, apellido, correo) 
+VALUES (random_uuid(), '99999999C', 'Cliente', 'Gastón', 'cliente@test.com');
+
+-- Negocios del Jefe Supremo
+INSERT INTO negocios (id, nombre, direccion, telefono, propietario_id) 
+VALUES (random_uuid(), 'Burgers ESI Centro', 'Calle Falsa 123', '911223344', 
+(SELECT id FROM propietarios WHERE correo='admin@esi.es'));
+
+INSERT INTO negocios (id, nombre, direccion, telefono, propietario_id) 
+VALUES (random_uuid(), 'Burgers ESI Playa', 'Paseo Marítimo 1', '955667788', 
+(SELECT id FROM propietarios WHERE correo='admin@esi.es'));
+
+-- ==========================================
+-- 3. EMPLEADOS (Para Ranking y gestión)
+-- ==========================================
+
+-- Empleado 1: JUAN (Camarero)
+INSERT INTO empleados (
+    id, dtype, 
+    dni, nombre, apellido, correo, salario, 
+    negocio_id, estado_empleado_id, turno_id, propietario_id
+)
+VALUES (
+    random_uuid(), 'Camarero',
+    '11111111E', 'Juan', 'El Rápido', 'juan@esi.es', 1500.00,
+    (SELECT id FROM negocios WHERE nombre='Burgers ESI Centro'),
+    (SELECT id FROM estados_empleado WHERE nombre='Activo'),
+    (SELECT id FROM turnos WHERE nombre='Mañana'),
+    (SELECT id FROM propietarios WHERE correo='admin@esi.es')
+);
+
+-- Empleado 2: ANA (Cocinero)
+INSERT INTO empleados (
+    id, dtype,
+    dni, nombre, apellido, correo, salario, 
+    negocio_id, estado_empleado_id, turno_id, propietario_id
+)
+VALUES (
+    random_uuid(), 'Cocina', 
+    '22222222E', 'Ana', 'Tranquila', 'ana@esi.es', 1200.00,
+    (SELECT id FROM negocios WHERE nombre='Burgers ESI Playa'),
+    (SELECT id FROM estados_empleado WHERE nombre='Activo'),
+    (SELECT id FROM turnos WHERE nombre='Tarde'),
+    (SELECT id FROM propietarios WHERE correo='admin@esi.es')
+);
+
+-- ==========================================
+-- 4. PRODUCTOS (Con Stock Bajo para alertas)
+-- ==========================================
+
+INSERT INTO productos (id, nombre, descripcion, importe, stock, tipo_id)
+VALUES (random_uuid(), 'Big Burger', 'Doble carne', 10.50, 100, 
+(SELECT id FROM tipos_producto WHERE nombre='Hamburguesa'));
+
+INSERT INTO productos (id, nombre, descripcion, importe, stock, tipo_id)
+VALUES (random_uuid(), 'Coca Cola Zero', 'Sin azúcar', 2.50, 5, 
+(SELECT id FROM tipos_producto WHERE nombre='Bebida'));
+
+INSERT INTO productos (id, nombre, descripcion, importe, stock, tipo_id)
+VALUES (random_uuid(), 'Helado Fresa', 'Postre', 3.00, 2, 
+(SELECT id FROM tipos_producto WHERE nombre='Postre'));
+
+-- ==========================================
+-- 5. PEDIDOS Y VENTAS
+-- ==========================================
+
+-- PEDIDO 1: HOY
+INSERT INTO pedidos (id, fecha_hora, total, cliente_id, empleado_id, estado_pedido_id)
+VALUES (random_uuid(), CURRENT_TIMESTAMP, 65.00, 
+(SELECT id FROM clientes WHERE dni='99999999C'),
+(SELECT id FROM empleados WHERE nombre='Juan'),
+(SELECT id FROM estados_pedido WHERE nombre='ENTREGADO'));
+
+INSERT INTO lineas_pedido (id, cantidad, precio_unitario, pedido_id, producto_id)
+VALUES (random_uuid(), 5, 10.50, (SELECT id FROM pedidos WHERE total=65.00), (SELECT id FROM productos WHERE nombre='Big Burger'));
+
+INSERT INTO lineas_pedido (id, cantidad, precio_unitario, pedido_id, producto_id)
+VALUES (random_uuid(), 5, 2.50, (SELECT id FROM pedidos WHERE total=65.00), (SELECT id FROM productos WHERE nombre='Coca Cola Zero'));
 
 
+-- PEDIDO 2: HOY
+INSERT INTO pedidos (id, fecha_hora, total, cliente_id, empleado_id, estado_pedido_id)
+VALUES (random_uuid(), CURRENT_TIMESTAMP, 6.00, 
+(SELECT id FROM clientes WHERE dni='99999999C'),
+(SELECT id FROM empleados WHERE nombre='Ana'),
+(SELECT id FROM estados_pedido WHERE nombre='ENTREGADO'));
 
-INSERT INTO ESTADOS_EMPLEADO (ID, NOMBRE) VALUES ('44444444-4444-4444-4444-444444444444', 'Activo');
-INSERT INTO ESTADOS_EMPLEADO (ID, NOMBRE) VALUES ('55555555-5555-5555-5555-555555555555', 'De Baja');
-INSERT INTO ESTADOS_EMPLEADO (ID, NOMBRE) VALUES ('66666666-6666-6666-6666-666666666666', 'Vacaciones');
+INSERT INTO lineas_pedido (id, cantidad, precio_unitario, pedido_id, producto_id)
+VALUES (random_uuid(), 2, 3.00, (SELECT id FROM pedidos WHERE total=6.00), (SELECT id FROM productos WHERE nombre='Helado Fresa'));
 
 
-INSERT INTO EMPLEADOS (ID, DTYPE, NOMBRE, APELLIDO, DNI, SALARIO, TURNO_ID, ESTADO_EMPLEADO_ID, PROPIETARIO_ID, NEGOCIO_ID) 
-VALUES (random_uuid(), 'Repartidor', 'Carlos', 'Rápido', '11111111C', 1200.50, '11111111-1111-1111-1111-111111111111', '44444444-4444-4444-4444-444444444444', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1');
+-- PEDIDO 3: MES PASADO
+INSERT INTO pedidos (id, fecha_hora, total, cliente_id, empleado_id, estado_pedido_id)
+VALUES (random_uuid(), DATEADD('MONTH', -1, CURRENT_TIMESTAMP), 200.00, 
+(SELECT id FROM clientes WHERE dni='99999999C'),
+(SELECT id FROM empleados WHERE nombre='Juan'), 
+(SELECT id FROM estados_pedido WHERE nombre='ENTREGADO'));
 
-INSERT INTO EMPLEADOS (ID, DTYPE, NOMBRE, APELLIDO, DNI, SALARIO, TURNO_ID, ESTADO_EMPLEADO_ID, PROPIETARIO_ID, NEGOCIO_ID) 
-VALUES (random_uuid(), 'Cocina', 'Laura', 'Chef', '22222222D', 1500.00, '22222222-2222-2222-2222-222222222222', '44444444-4444-4444-4444-444444444444', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2');
+
+-- PEDIDO 4: AÑO PASADO
+INSERT INTO pedidos (id, fecha_hora, total, cliente_id, empleado_id, estado_pedido_id)
+VALUES (random_uuid(), DATEADD('YEAR', -1, CURRENT_TIMESTAMP), 500.00, 
+(SELECT id FROM clientes WHERE dni='99999999C'),
+(SELECT id FROM empleados WHERE nombre='Ana'),
+(SELECT id FROM estados_pedido WHERE nombre='ENTREGADO'));

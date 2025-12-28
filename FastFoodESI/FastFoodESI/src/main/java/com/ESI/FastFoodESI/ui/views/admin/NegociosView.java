@@ -4,6 +4,8 @@ import com.ESI.FastFoodESI.model.Negocio;
 import com.ESI.FastFoodESI.model.Propietario; 
 import com.ESI.FastFoodESI.repository.PropietarioRepository;
 import com.ESI.FastFoodESI.service.admin.NegocioService;
+import com.ESI.FastFoodESI.service.admin.ProductoService;
+import com.ESI.FastFoodESI.repository.CartaRepository;
 import com.ESI.FastFoodESI.ui.layouts.admin.PropietarioMainLayout;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
@@ -28,7 +30,7 @@ import java.util.Optional;
 
 @Route(value = "admin/negocios", layout = PropietarioMainLayout.class)
 @PageTitle("Mis Negocios | Admin")
-@RolesAllowed("PROPRIETARIO")
+@RolesAllowed("PROPIETARIO")
 @SpringComponent
 @UIScope
 public class NegociosView extends VerticalLayout {
@@ -38,14 +40,23 @@ public class NegociosView extends VerticalLayout {
     private final PropietarioRepository propietarioRepository;
     private final NegocioForm form;
     private final Dialog dialog = new Dialog();
+    private final ProductoService productoService;
+    private final ProductoForm productoForm;
+    private final CartaRepository cartaRepository;
 
     @Autowired
     public NegociosView(NegocioService negocioService, 
                         PropietarioRepository propietarioRepository,
-                        NegocioForm form) {
+                        NegocioForm form,
+                        ProductoService productoService,
+                        ProductoForm productoForm,
+                        CartaRepository cartaRepository) {
         this.negocioService = negocioService;
         this.propietarioRepository = propietarioRepository;
         this.form = form;
+        this.productoService = productoService;
+        this.productoForm = productoForm;
+        this.cartaRepository = cartaRepository;
 
         this.form.setOnSaveListener(this::updateList);
 
@@ -80,6 +91,11 @@ public class NegociosView extends VerticalLayout {
     }
 
     private Component createActionsButton(Negocio negocio) {
+        Button cartaButton = new Button(VaadinIcon.FILE_TEXT.create());
+        cartaButton.addThemeName("secondary");
+        cartaButton.setTooltipText("Gestionar Carta");
+        cartaButton.addClickListener(e -> openCartaDialog(negocio));
+
         Button editButton = new Button(VaadinIcon.PENCIL.create());
         editButton.addThemeName("small");
         editButton.addClickListener(e -> editNegocio(negocio));
@@ -88,7 +104,12 @@ public class NegociosView extends VerticalLayout {
         deleteButton.addThemeNames("small error tertiary");
         deleteButton.addClickListener(e -> deleteNegocio(negocio));
 
-        return new HorizontalLayout(editButton, deleteButton);
+        return new HorizontalLayout(cartaButton, editButton, deleteButton);
+    }
+
+    private void openCartaDialog(Negocio negocio) {
+        GestionCartaDialog dialog = new GestionCartaDialog(negocio, productoService, productoForm, cartaRepository);
+        dialog.open();
     }
 
     private void configureDialog() {

@@ -27,11 +27,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.List;
-import java.util.Optional;
 
 @Route(value = "admin/empleados", layout = PropietarioMainLayout.class)
 @PageTitle("Gestión de Empleados | Admin")
-@RolesAllowed("PROPRIETARIO")
+@RolesAllowed("PROPIETARIO")
 @SpringComponent
 @UIScope
 public class EmpleadosView extends VerticalLayout {
@@ -110,19 +109,25 @@ public class EmpleadosView extends VerticalLayout {
         }
     }
 
-    private void addEmpleado() {
+    private void addEmpleado() { 
+        
         Propietario actual = getCurrentPropietario();
-        if (actual != null) {
-            grid.asSingleSelect().clear();
-            
-            List<Negocio> misNegocios = negocioService.findAllByPropietario(actual);
-            form.setNegociosDisponibles(misNegocios);
-            
-            Empleado nuevoEmpleado = new Empleado(); 
-            
-            form.setEmpleado(nuevoEmpleado, dialog);
-            dialog.open();
+        
+        if (actual == null) {
+            Notification.show("Error: Usuario no encontrado. Recarga la página.", 
+                              3000, Notification.Position.MIDDLE);
+            return;
         }
+
+        grid.asSingleSelect().clear();
+        
+        List<Negocio> misNegocios = negocioService.findAllByPropietario(actual);
+        form.setNegociosDisponibles(misNegocios);
+        
+        Empleado nuevoEmpleado = new Empleado(); 
+        
+        form.setEmpleado(nuevoEmpleado, dialog);
+        dialog.open();
     }
 
     private void editEmpleado(Empleado empleado) {

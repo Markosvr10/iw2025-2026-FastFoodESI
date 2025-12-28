@@ -31,4 +31,6 @@ public interface ProductoRepository extends JpaRepository<Producto, UUID> {
            "GROUP BY prod " +
            "ORDER BY SUM(lp.cantidad) DESC")
     List<RankingItemDTO> findTopProductosVentas(@Param("desde") LocalDateTime desde, Pageable pageable);
+
+    List<Producto> findByNombreContainingIgnoreCase(String nombre);
 }

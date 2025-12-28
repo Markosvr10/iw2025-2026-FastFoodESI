@@ -1,0 +1,5 @@
+# Ignorar configuraciones de IDE en la raiz
+.idea/
+.vscode/
+*.swp
+.DS_Store

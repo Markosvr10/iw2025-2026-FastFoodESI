@@ -11,6 +11,7 @@ import com.ESI.FastFoodESI.dto.RankingItemDTO;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 
@@ -25,4 +26,6 @@ public interface NegocioRepository extends JpaRepository<Negocio, UUID> {
            "GROUP BY n " +
            "ORDER BY SUM(p.total) DESC")
     List<RankingItemDTO> findTopNegociosVentas(@Param("desde") LocalDateTime desde, Pageable pageable);
+
+    Optional<Negocio> findByNombre(String nombre);
 }

@@ -73,10 +73,6 @@ public class PedidoClienteService {
     }
 
     public List<Pedido> obtenerPedidosDeCliente(Cliente cliente) {
-        List<Pedido> pedidos = pedidoRepository.findByClienteId(cliente.getId());
-
-        return pedidos.stream()
-                .sorted(Comparator.comparing(Pedido::getFechaHora).reversed())
-                .collect(Collectors.toList());
+        return pedidoRepository.findByClienteIdOrderByFechaHoraDesc(cliente.getId());
     }
 }

@@ -95,9 +95,9 @@ public class PerfilView extends VerticalLayout {
     private void configurarCampos() {
         dni.setReadOnly(true);
         correo.setReadOnly(true);
-        password.setPlaceholder("Escribe solo si quieres cambiarla");
+        password.setPlaceholder("Escribir nueva contraseña");
         password.setRevealButtonVisible(true);
-        passwordConfirm.setPlaceholder("Repítela para confirmar");
+        passwordConfirm.setPlaceholder("Repetir contraseña para confirmar");
         passwordConfirm.setRevealButtonVisible(true);
     }
 

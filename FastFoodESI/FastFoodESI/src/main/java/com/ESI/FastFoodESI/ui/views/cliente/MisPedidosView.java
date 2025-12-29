@@ -67,8 +67,8 @@ public class MisPedidosView extends VerticalLayout {
             Optional<Cliente> clienteOpt = clienteRepository.findByCorreo(user.getUsername());
 
             if (clienteOpt.isPresent()) {
-                // Buscamos los pedidos (asegúrate de que findByClienteId ordena por fecha descendente si puedes)
-                List<Pedido> pedidos = pedidoRepository.findByClienteId(clienteOpt.get().getId());
+                // Buscamos los pedidos (findByClienteId ordena por fecha descendente)
+                List<Pedido> pedidos = pedidoRepository.findByClienteIdOrderByFechaHoraDesc(clienteOpt.get().getId());
 
                 if (pedidos.isEmpty()) {
                     pedidosContainer.add(new Span("No has realizado ningún pedido aún."));

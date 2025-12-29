@@ -111,10 +111,10 @@ public class CarritoView extends VerticalLayout {
 
         Button btnSeguir = new Button("Seguir Pidiendo");
         btnSeguir.addClickListener(e -> UI.getCurrent().navigate(""));
+        btnSeguir.getStyle().set("margin-left", "auto");
 
         Button btnConfirmar = new Button("Confirmar Pedido", VaadinIcon.CHECK.create());
         btnConfirmar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        btnConfirmar.getStyle().set("margin-left", "auto");
 
         // LÓGICA BOTÓN CONFIRMAR
         btnConfirmar.addClickListener(e -> {
@@ -298,11 +298,11 @@ public class CarritoView extends VerticalLayout {
             dialog.open();
         });
 
-        HorizontalLayout footer = new HorizontalLayout(totalLabel, btnConfirmar);
+        HorizontalLayout footer = new HorizontalLayout(totalLabel, btnSeguir, btnConfirmar);
         footer.setWidthFull();
         footer.setAlignItems(Alignment.CENTER);
 
-        add(titulo, grid, footer, btnSeguir);
+        add(titulo, grid, footer);
     }
 
     private void actualizarVista() {

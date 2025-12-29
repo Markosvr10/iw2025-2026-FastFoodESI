@@ -6,7 +6,7 @@ import com.ESI.FastFoodESI.model.Pedido;
 import com.ESI.FastFoodESI.repository.ClienteRepository;
 import com.ESI.FastFoodESI.repository.PedidoRepository;
 import com.ESI.FastFoodESI.security.SecurityService;
-import com.ESI.FastFoodESI.ui.layout.MainLayout;
+import com.ESI.FastFoodESI.ui.layouts.MainLayout;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H4;
@@ -33,12 +33,11 @@ public class MisPedidosView extends VerticalLayout {
     private final ClienteRepository clienteRepository;
     private final SecurityService securityService;
 
-
     private final VerticalLayout pedidosContainer;
 
     public MisPedidosView(PedidoRepository pedidoRepository,
-                          ClienteRepository clienteRepository,
-                          SecurityService securityService) {
+            ClienteRepository clienteRepository,
+            SecurityService securityService) {
         this.pedidoRepository = pedidoRepository;
         this.clienteRepository = clienteRepository;
         this.securityService = securityService;
@@ -104,8 +103,10 @@ public class MisPedidosView extends VerticalLayout {
         // ESTADO
         Span estado = new Span(pedido.getEstado() != null ? pedido.getEstado().getNombre() : "Pendiente");
         estado.getElement().getThemeList().add("badge");
-        if ("RECIBIDO".equals(estado.getText())) estado.getElement().getThemeList().add("success");
-        else if ("PENDIENTE".equals(estado.getText())) estado.getElement().getThemeList().add("contrast");
+        if ("RECIBIDO".equals(estado.getText()))
+            estado.getElement().getThemeList().add("success");
+        else if ("PENDIENTE".equals(estado.getText()))
+            estado.getElement().getThemeList().add("contrast");
 
         header.add(fecha, estado);
 
@@ -115,7 +116,6 @@ public class MisPedidosView extends VerticalLayout {
         detalles.setSpacing(false);
         detalles.getStyle().set("margin-top", "10px");
         detalles.getStyle().set("color", "#555");
-
 
         if (pedido.getLineas() != null) {
             for (LineaPedido linea : pedido.getLineas()) {

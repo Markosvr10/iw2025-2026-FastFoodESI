@@ -4,7 +4,7 @@ import com.ESI.FastFoodESI.model.Producto;
 import com.ESI.FastFoodESI.model.Tipo;
 import com.ESI.FastFoodESI.service.cliente.CarritoService;
 import com.ESI.FastFoodESI.service.cliente.MenuService;
-import com.ESI.FastFoodESI.ui.layout.MainLayout;
+import com.ESI.FastFoodESI.ui.layouts.MainLayout;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -15,6 +15,7 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
@@ -24,12 +25,11 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
-import com.vaadin.flow.component.orderedlayout.Scroller;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Route(value = "", layout = MainLayout.class)
+@Route(value = "carta", layout = MainLayout.class)
 @PageTitle("Carta | FastFood ESI")
 @AnonymousAllowed
 public class CartaView extends VerticalLayout {
@@ -38,12 +38,10 @@ public class CartaView extends VerticalLayout {
     private final CarritoService carritoService;
     private List<Producto> todosLosProductos;
 
-    //Componentes ui
+    // Componentes ui
     private final FlexLayout contenedorTarjetas;
     private final TextField buscador;
     private final Tabs tabsCategorias;
-
-    //******************************************************************************************************************
 
     public CartaView(MenuService menuService, CarritoService carritoService) {
         this.menuService = menuService;
@@ -54,7 +52,7 @@ public class CartaView extends VerticalLayout {
 
         // configuración visual base
         setSizeFull();
-        setPadding(true);
+        setPadding(false);
         setSpacing(true);
         setMaxWidth("1200px");
         getStyle().set("margin", "0 auto");
@@ -80,6 +78,7 @@ public class CartaView extends VerticalLayout {
         topBar.setWidthFull();
         topBar.setAlignItems(Alignment.CENTER);
         topBar.expand(buscador);
+        topBar.setPadding(true);
 
         // Pestañas
         tabsCategorias = new Tabs();
@@ -101,22 +100,22 @@ public class CartaView extends VerticalLayout {
         contenedorTarjetas.getStyle().set("gap", "20px");
         contenedorTarjetas.setJustifyContentMode(JustifyContentMode.CENTER);
 
+        // --- CORRECCIÓN AQUÍ ---
+        // FlexLayout no tiene setPadding(boolean), usamos CSS:
+        contenedorTarjetas.getStyle().set("padding", "20px");
+        // -----------------------
+
         // Carga inicial
         filtrarProductos();
 
-        //scroll del buscador, el botón del carrito y las categorías
+        // Scroll
         Scroller scroller = new Scroller(contenedorTarjetas);
         scroller.setSizeFull();
         scroller.setScrollDirection(Scroller.ScrollDirection.VERTICAL);
 
-        setPadding(false);
-
         add(topBar, tabsCategorias, scroller);
-
         expand(scroller);
     }
-
-    //------------------------------------------------------------------------------------------------------------------
 
     private void filtrarProductos() {
         contenedorTarjetas.removeAll();
@@ -144,8 +143,6 @@ public class CartaView extends VerticalLayout {
             }
         }
     }
-
-    //------------------------------------------------------------------------------------------------------------------
 
     private Component crearTarjetaProducto(Producto p) {
         Div imagenDiv = new Div();
@@ -187,8 +184,6 @@ public class CartaView extends VerticalLayout {
         descripcion.getStyle().set("overflow", "hidden");
         descripcion.setWidth("100%");
 
-        // --- AQUÍ ESTABA EL ERROR ---
-        // Fíjate que AHORA creamos el botón antes de usarlo
         Button btnAdd = new Button("Añadir", VaadinIcon.PLUS.create());
         btnAdd.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         btnAdd.setWidthFull();
@@ -197,7 +192,6 @@ public class CartaView extends VerticalLayout {
             Notification.show(p.getNombre() + " añadido al carrito")
                     .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
         });
-        // ----------------------------
 
         VerticalLayout card = new VerticalLayout(imagenDiv, nombre, descripcion, precio, btnAdd);
         card.setPadding(true);

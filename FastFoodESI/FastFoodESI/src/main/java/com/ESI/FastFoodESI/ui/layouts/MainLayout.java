@@ -1,4 +1,4 @@
-package com.ESI.FastFoodESI.ui.layout;
+package com.ESI.FastFoodESI.ui.layouts;
 
 import com.ESI.FastFoodESI.model.Cliente;
 import com.ESI.FastFoodESI.repository.ClienteRepository;
@@ -40,7 +40,7 @@ public class MainLayout extends AppLayout {
     }
 
     private void createHeader() {
-        //LOGO > carta
+        // LOGO > carta
         H1 logo = new H1("FastFood ESI");
         logo.getStyle().set("font-size", "20px");
         logo.getStyle().set("margin", "0");
@@ -60,7 +60,7 @@ public class MainLayout extends AppLayout {
 
         if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
 
-            //empujar el menú a la derecha
+            // empujar el menú a la derecha
             Div spacer = new Div();
             header.add(spacer);
             header.expand(spacer);
@@ -109,7 +109,7 @@ public class MainLayout extends AppLayout {
                 UI.getCurrent().navigate(PerfilView.class);
             });
 
-            //Mis Pedidos
+            // Mis Pedidos
             subMenu.addItem("Mis Pedidos", e -> {
                 UI.getCurrent().navigate("mis-pedidos");
             });
@@ -129,9 +129,8 @@ public class MainLayout extends AppLayout {
             logoutLayout.add(iconLogout, textLogout);
 
             subMenu.addItem(logoutLayout, e ->
-                    // ESTO FUNCIONARÁ AHORA PORQUE HEMOS ACTIVADO EL GET EN SECURITYCONFIG
-                    UI.getCurrent().getPage().setLocation("/logout")
-            );
+            // ESTO FUNCIONARÁ AHORA PORQUE HEMOS ACTIVADO EL GET EN SECURITYCONFIG
+            UI.getCurrent().getPage().setLocation("/logout"));
 
             header.add(userMenu);
 

@@ -2,6 +2,8 @@ package com.ESI.FastFoodESI.ui.views.publico;
 
 import com.ESI.FastFoodESI.model.Cliente;
 import com.ESI.FastFoodESI.dto.LineaCarrito;
+import com.ESI.FastFoodESI.repository.ClienteRepository;
+import com.ESI.FastFoodESI.security.SecurityService;
 import com.ESI.FastFoodESI.service.cliente.CarritoService;
 import com.ESI.FastFoodESI.service.pedido.PedidoClienteService;
 import com.ESI.FastFoodESI.ui.layout.MainLayout;
@@ -28,6 +30,9 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.Optional;
 
 @Route(value = "carrito", layout = MainLayout.class)
 @PageTitle("Mi Pedido | FastFood ESI")
@@ -36,13 +41,17 @@ public class CarritoView extends VerticalLayout {
 
     private final CarritoService carritoService;
     private final PedidoClienteService pedidoService;
+    private final ClienteRepository clienteRepository;
+    private final SecurityService securityService;
 
     private final Grid<LineaCarrito> grid;
     private final H3 totalLabel;
 
-    public CarritoView(CarritoService carritoService, PedidoClienteService pedidoService) {
+    public CarritoView(CarritoService carritoService, PedidoClienteService pedidoService, ClienteRepository clienteRepository, SecurityService securityService) {
         this.carritoService = carritoService;
         this.pedidoService = pedidoService;
+        this.clienteRepository = clienteRepository;
+        this.securityService = securityService;
 
         setSizeFull();
         setPadding(true);
@@ -243,14 +252,24 @@ public class CarritoView extends VerticalLayout {
                     }
                 }
 
-                // Si algo falló, paramos aquí
-                if (!validacionCorrecta) {
-                    return;
+                if (!validacionCorrecta) return;
+
+                // ASIGNAR EL CLIENTE A DICHO PEDIDO
+                Cliente clienteReal = null;
+                UserDetails userDetails = securityService.getAuthenticatedUser();
+
+                if (userDetails != null) {
+                    Optional<Cliente> c = clienteRepository.findByCorreo(userDetails.getUsername());
+                    if (c.isPresent()) {
+                        clienteReal = c.get(); //lo asignamos
+                    }
                 }
 
-                // SI TODO ESTÁ BIEN, PROCESAMOS
-                Notification.show("Procesando pago...", 1000, Notification.Position.MIDDLE);
-                Cliente clienteReal = null;
+                if (clienteReal == null) {
+                    Notification.show("Error crítico: No se encontró tu usuario cliente en la base de datos.")
+                            .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                    return;
+                }
 
                 try {
                     pedidoService.confirmarPedido(
@@ -266,6 +285,7 @@ public class CarritoView extends VerticalLayout {
                     carritoService.vaciarCarrito();
                     actualizarVista();
                     dialog.close();
+                    UI.getCurrent().navigate("mis-pedidos");    //redirigir a la vista mispedidos
 
                 } catch (Exception ex) {
                     Notification.show("Error: " + ex.getMessage())

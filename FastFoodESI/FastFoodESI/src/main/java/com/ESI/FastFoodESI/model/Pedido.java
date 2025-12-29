@@ -20,6 +20,9 @@ public class Pedido {
     @Column(nullable = false)
     private LocalDateTime fechaHora;
 
+    @Column(precision = 10, scale = 2)
+    private BigDecimal total = BigDecimal.ZERO;
+
     @Column(name = "tipo_entrega")
     private String tipoEntrega; // "Mesa", "Domicilio", "Recoger"
 
@@ -36,10 +39,14 @@ public class Pedido {
     @JoinColumn(name = "cliente_id")
     private Cliente cliente;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "empleado_id")
+    private Empleado empleado;
+
     @NotNull
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "estado_pedido_id", nullable = false)
-    private EstadoPedido estado; // Usando la entidad renombrada
+    private EstadoPedido estado;
 
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<LineaPedido> lineas;
@@ -51,7 +58,7 @@ public class Pedido {
     // --- ATRIBUTO CALCULADO ---
 
     @Transient
-    public BigDecimal getImporteTotal() {
+    public BigDecimal getImporteTotalCalculado() {
         if (this.lineas == null || this.lineas.isEmpty()) {
             return BigDecimal.ZERO;
         }
@@ -61,13 +68,9 @@ public class Pedido {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    // --- CONSTRUCTORES ---
-
     public Pedido() {
         this.fechaHora = LocalDateTime.now();
     }
-
-    // --- GETTERS Y SETTERS ---
 
     public UUID getId() {
         return id;
@@ -83,6 +86,14 @@ public class Pedido {
 
     public void setFechaHora(LocalDateTime fechaHora) {
         this.fechaHora = fechaHora;
+    }
+
+    public BigDecimal getTotal() {
+        return total;
+    }
+
+    public void setTotal(BigDecimal total) {
+        this.total = total;
     }
 
     public String getTipoEntrega() {
@@ -115,6 +126,14 @@ public class Pedido {
 
     public void setCliente(Cliente cliente) {
         this.cliente = cliente;
+    }
+
+    public Empleado getEmpleado() {
+        return empleado;
+    }
+
+    public void setEmpleado(Empleado empleado) {
+        this.empleado = empleado;
     }
 
     public EstadoPedido getEstado() {

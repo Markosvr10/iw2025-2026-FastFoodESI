@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Lazy;
 
 @Route(value = "admin/productos", layout = PropietarioMainLayout.class)
 @PageTitle("Gestión de Carta | Admin")
-@RolesAllowed("PROPRIETARIO")
+@RolesAllowed("PROPIETARIO")
 public class ProductosView extends VerticalLayout {
 
     private final ProductoService service;

@@ -1,16 +1,14 @@
 package com.ESI.FastFoodESI.ui.views.admin;
 
-import com.ESI.FastFoodESI.model.Alergeno;
 import com.ESI.FastFoodESI.model.Producto;
 import com.ESI.FastFoodESI.model.Tipo;
-import com.ESI.FastFoodESI.repository.AlergenoRepository;
-import com.ESI.FastFoodESI.repository.TipoRepository;
+import com.ESI.FastFoodESI.repository.TipoRepository; 
 import com.ESI.FastFoodESI.service.admin.ProductoService;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
-import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.notification.Notification;
@@ -30,97 +28,99 @@ import com.vaadin.flow.spring.annotation.UIScope;
 @UIScope
 public class ProductoForm extends VerticalLayout {
 
-    private final ProductoService service;
-    private final ProductosView parentView;
+    private final ProductoService productoService;
+    private final TipoRepository tipoRepository; 
 
     private final Binder<Producto> binder = new BeanValidationBinder<>(Producto.class);
     private Producto currentProducto;
-    private Dialog dialog;
+    private Dialog parentDialog;
 
-    // Campos
-    private final TextField nombre = new TextField("Nombre del Producto");
-    private final TextArea descripcion = new TextArea("Descripción");
-    private final BigDecimalField importe = new BigDecimalField("Precio (€)");
-    private final IntegerField stock = new IntegerField("Stock Disponible");
-    
-    // Selectores
-    private final ComboBox<Tipo> tipo = new ComboBox<>("Categoría");
-    private final MultiSelectComboBox<Alergeno> alergenos = new MultiSelectComboBox<>("Alérgenos");
+    private Runnable onSaveListener; 
 
-    // Botones
-    private final Button saveButton = new Button("Guardar");
-    private final Button cancelButton = new Button("Cancelar");
+    TextField nombre = new TextField("Nombre");
+    TextArea descripcion = new TextArea("Descripción");
+    BigDecimalField importe = new BigDecimalField("Precio (€)");
+    IntegerField stock = new IntegerField("Stock");
+    ComboBox<Tipo> tipo = new ComboBox<>("Tipo de Producto");
 
-    public ProductoForm(ProductoService service, 
-                        ProductosView parentView,
-                        TipoRepository tipoRepo, 
-                        AlergenoRepository alergenoRepo) {
-        this.service = service;
-        this.parentView = parentView;
+    Button save = new Button("Guardar");
+    Button cancel = new Button("Cancelar");
+    Button close = new Button("Cerrar");
 
-        // Configurar selectores
-        tipo.setItems(tipoRepo.findAll());
+    public ProductoForm(ProductoService productoService, TipoRepository tipoRepository) {
+        this.productoService = productoService;
+        this.tipoRepository = tipoRepository;
+        
+        addClassName("producto-form");
+
+        tipo.setItems(tipoRepository.findAll());
         tipo.setItemLabelGenerator(Tipo::getNombre);
-        
-        alergenos.setItems(alergenoRepo.findAll());
-        alergenos.setItemLabelGenerator(Alergeno::getNombre);
 
-        // Configurar campos numéricos
-        importe.addThemeVariants(com.vaadin.flow.component.textfield.TextFieldVariant.LUMO_ALIGN_RIGHT);
-        importe.setPrefixComponent(new com.vaadin.flow.component.html.Span("€"));
-        
-        // Binder
         binder.bindInstanceFields(this);
 
-        // Layout
         add(createFormLayout(), createButtonsLayout());
-        
-        saveButton.addClickListener(e -> validateAndSave());
-        cancelButton.addClickListener(e -> closeForm());
     }
 
-    private Component createFormLayout() {
-        FormLayout form = new FormLayout();
-        nombre.setWidthFull();
-        descripcion.setWidthFull();
-        alergenos.setWidthFull();
-        
-        form.add(nombre, tipo, importe, stock, descripcion, alergenos);
-        // Hacemos que la descripción y alérgenos ocupen 2 columnas si hay espacio
-        form.setColspan(descripcion, 2);
-        form.setColspan(alergenos, 2);
-        return form;
+
+    public void setOnSaveListener(Runnable onSaveListener) {
+        this.onSaveListener = onSaveListener;
     }
 
-    private Component createButtonsLayout() {
-        saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        cancelButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        return new HorizontalLayout(saveButton, cancelButton);
-    }
-
-    public void setProducto(Producto producto, Dialog parentDialog) {
+    public void setProducto(Producto producto, Dialog dialog) {
         this.currentProducto = producto;
-        this.dialog = parentDialog;
+        this.parentDialog = dialog;
         binder.readBean(producto);
     }
 
-    private void closeForm() {
-        if (dialog != null) dialog.close();
+    private Component createFormLayout() {
+        FormLayout formLayout = new FormLayout();
+        nombre.setWidthFull();
+        descripcion.setWidthFull();
+        
+        formLayout.add(nombre, tipo, importe, stock, descripcion);
+        formLayout.setColspan(descripcion, 2);
+        return formLayout;
+    }
+
+    private Component createButtonsLayout() {
+        save.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        
+        save.addClickShortcut(Key.ENTER);
+        cancel.addClickShortcut(Key.ESCAPE);
+
+        save.addClickListener(event -> validateAndSave());
+        cancel.addClickListener(event -> closeForm());
+
+        return new HorizontalLayout(save, cancel);
     }
 
     private void validateAndSave() {
         try {
             binder.writeBean(currentProducto);
-            service.save(currentProducto);
             
-            Notification.show("Producto guardado", 3000, Notification.Position.BOTTOM_START)
+            productoService.save(currentProducto);
+            
+            Notification.show("Producto guardado correctamente")
                 .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+
+            if (onSaveListener != null) {
+                onSaveListener.run();
+            }
             
-            parentView.updateList();
-            closeForm();
+            closeForm(); 
+
         } catch (Exception e) {
-            Notification.show("Error al guardar: " + e.getMessage(), 5000, Notification.Position.MIDDLE)
+            Notification.show("Error al guardar: " + e.getMessage())
                 .addThemeVariants(NotificationVariant.LUMO_ERROR);
+        }
+    }
+
+    private void closeForm() {
+        if (parentDialog != null) {
+            parentDialog.close();
+        } else {
+            this.setVisible(false);
         }
     }
 }

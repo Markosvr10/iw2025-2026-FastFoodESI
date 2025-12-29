@@ -18,8 +18,7 @@ public class HomeView extends VerticalLayout implements BeforeEnterObserver {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        if (auth != null
-                && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_PROPRIETARIO"))) {
+        if (auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_PROPIETARIO"))) {
 
             event.forwardTo(NegociosView.class);
 

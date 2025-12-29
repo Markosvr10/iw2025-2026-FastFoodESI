@@ -1,7 +1,7 @@
 package com.ESI.FastFoodESI.config;
 
 import com.ESI.FastFoodESI.model.Propietario;
-import com.ESI.FastFoodESI.repository.PropietarioRepository; // <--- 1. Importar
+import com.ESI.FastFoodESI.repository.PropietarioRepository;
 import com.ESI.FastFoodESI.ui.views.publico.LoginView;
 import com.vaadin.flow.spring.security.VaadinWebSecurity;
 import org.springframework.context.annotation.Bean;
@@ -18,10 +18,10 @@ import java.util.Optional;
 @Configuration
 public class SecurityConfig extends VaadinWebSecurity {
 
-    // 2. Declaramos el repositorio
+    // Inyectamos el repositorio para poder buscar el apellido del usuario en el
+    // login
     private final PropietarioRepository propietarioRepository;
 
-    // 3. Lo inyectamos en el constructor
     public SecurityConfig(PropietarioRepository propietarioRepository) {
         this.propietarioRepository = propietarioRepository;
     }
@@ -78,6 +78,7 @@ public class SecurityConfig extends VaadinWebSecurity {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
+        // Usamos DelegatingPasswordEncoder para soportar {noop}pass y {bcrypt}hash
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 }

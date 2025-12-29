@@ -2,6 +2,8 @@ package com.ESI.FastFoodESI.ui.views.publico;
 
 import com.ESI.FastFoodESI.model.Cliente;
 import com.ESI.FastFoodESI.dto.LineaCarrito;
+import com.ESI.FastFoodESI.repository.ClienteRepository;
+import com.ESI.FastFoodESI.security.SecurityService;
 import com.ESI.FastFoodESI.service.cliente.CarritoService;
 import com.ESI.FastFoodESI.service.pedido.PedidoClienteService;
 import com.ESI.FastFoodESI.ui.layouts.MainLayout;
@@ -28,6 +30,9 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.Optional;
 
 @Route(value = "carrito", layout = MainLayout.class)
 @PageTitle("Mi Pedido | FastFood ESI")
@@ -36,13 +41,18 @@ public class CarritoView extends VerticalLayout {
 
     private final CarritoService carritoService;
     private final PedidoClienteService pedidoService;
+    private final ClienteRepository clienteRepository;
+    private final SecurityService securityService;
 
     private final Grid<LineaCarrito> grid;
     private final H3 totalLabel;
 
-    public CarritoView(CarritoService carritoService, PedidoClienteService pedidoService) {
+    public CarritoView(CarritoService carritoService, PedidoClienteService pedidoService,
+            ClienteRepository clienteRepository, SecurityService securityService) {
         this.carritoService = carritoService;
         this.pedidoService = pedidoService;
+        this.clienteRepository = clienteRepository;
+        this.securityService = securityService;
 
         setSizeFull();
         setPadding(true);
@@ -103,10 +113,10 @@ public class CarritoView extends VerticalLayout {
 
         Button btnSeguir = new Button("Seguir Pidiendo");
         btnSeguir.addClickListener(e -> UI.getCurrent().navigate(""));
+        btnSeguir.getStyle().set("margin-left", "auto");
 
         Button btnConfirmar = new Button("Confirmar Pedido", VaadinIcon.CHECK.create());
         btnConfirmar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        btnConfirmar.getStyle().set("margin-left", "auto");
 
         // LÓGICA BOTÓN CONFIRMAR
         btnConfirmar.addClickListener(e -> {
@@ -249,14 +259,25 @@ public class CarritoView extends VerticalLayout {
                             }
                         }
 
-                        // Si algo falló, paramos aquí
-                        if (!validacionCorrecta) {
+                        if (!validacionCorrecta)
                             return;
+
+                        // ASIGNAR EL CLIENTE A DICHO PEDIDO (LÓGICA DEL MAIN - CORRECTA)
+                        Cliente clienteReal = null;
+                        UserDetails userDetails = securityService.getAuthenticatedUser();
+
+                        if (userDetails != null) {
+                            Optional<Cliente> c = clienteRepository.findByCorreo(userDetails.getUsername());
+                            if (c.isPresent()) {
+                                clienteReal = c.get(); // lo asignamos
+                            }
                         }
 
-                        // SI TODO ESTÁ BIEN, PROCESAMOS
-                        Notification.show("Procesando pago...", 1000, Notification.Position.MIDDLE);
-                        Cliente clienteReal = null;
+                        if (clienteReal == null) {
+                            Notification.show("Error crítico: No se encontró tu usuario cliente en la base de datos.")
+                                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                            return;
+                        }
 
                         try {
                             pedidoService.confirmarPedido(
@@ -272,6 +293,9 @@ public class CarritoView extends VerticalLayout {
                             actualizarVista();
                             dialog.close();
 
+                            // REDIRECCIÓN A "MIS PEDIDOS" (DEL MAIN)
+                            UI.getCurrent().navigate("mis-pedidos");
+
                         } catch (Exception ex) {
                             Notification.show("Error: " + ex.getMessage())
                                     .addThemeVariants(NotificationVariant.LUMO_ERROR);
@@ -283,11 +307,11 @@ public class CarritoView extends VerticalLayout {
             dialog.open();
         });
 
-        HorizontalLayout footer = new HorizontalLayout(totalLabel, btnConfirmar);
+        HorizontalLayout footer = new HorizontalLayout(totalLabel, btnSeguir, btnConfirmar);
         footer.setWidthFull();
         footer.setAlignItems(Alignment.CENTER);
 
-        add(titulo, grid, footer, btnSeguir);
+        add(titulo, grid, footer);
     }
 
     private void actualizarVista() {

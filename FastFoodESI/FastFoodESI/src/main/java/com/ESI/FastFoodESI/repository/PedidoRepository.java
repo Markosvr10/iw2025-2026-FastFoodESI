@@ -13,6 +13,13 @@ import java.util.UUID;
 
 @Repository
 public interface PedidoRepository extends JpaRepository<Pedido, UUID> {
+
+    long count();
+
+    long countByFechaHoraAfter(LocalDateTime fecha);
+
+    List<Pedido> findByClienteIdOrderByFechaHoraDesc(UUID clienteId);
+
     List<Pedido> findByClienteId(UUID clienteId);
 
     List<Pedido> findByEstadoId(UUID estadoId);

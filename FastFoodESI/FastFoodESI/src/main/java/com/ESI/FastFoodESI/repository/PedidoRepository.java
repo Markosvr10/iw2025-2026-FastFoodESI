@@ -1,6 +1,9 @@
 package com.ESI.FastFoodESI.repository;
 
+import com.ESI.FastFoodESI.model.Negocio;
 import com.ESI.FastFoodESI.model.Pedido;
+
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -11,6 +14,11 @@ import java.util.UUID;
 @Repository
 public interface PedidoRepository extends JpaRepository<Pedido, UUID> {
     List<Pedido> findByClienteId(UUID clienteId);
+
     List<Pedido> findByEstadoId(UUID estadoId);
+
     List<Pedido> findByFechaHoraBetween(LocalDateTime desde, LocalDateTime hasta);
+
+    @EntityGraph(attributePaths = { "cliente", "estado", "negocio" })
+    List<Pedido> findByNegocio(Negocio negocio);
 }

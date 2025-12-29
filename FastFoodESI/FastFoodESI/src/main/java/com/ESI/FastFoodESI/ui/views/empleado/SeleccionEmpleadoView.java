@@ -154,11 +154,11 @@ public class SeleccionEmpleadoView extends VerticalLayout implements BeforeEnter
         if ("Cocina".equalsIgnoreCase(rolBuscado)) {
             UI.getCurrent().navigate(CocinaView.class);
         } else if ("Repartidor".equalsIgnoreCase(rolBuscado)) {
-            // UI.getCurrent().navigate(RepartidorView.class); // (Cuando la crees)
-            Notification.show("Vista Repartidor pendiente de crear");
+            UI.getCurrent().navigate(RepartidorView.class);
+        } else if ("Camarero".equalsIgnoreCase(rolBuscado)) {
+            UI.getCurrent().navigate(CamareroView.class);
         } else {
-            // UI.getCurrent().navigate(CartaView.class); // Para mostrador/camarero
-            Notification.show("Vista Mostrador pendiente de crear");
+            UI.getCurrent().navigate(MostradorView.class);
         }
     }
 }

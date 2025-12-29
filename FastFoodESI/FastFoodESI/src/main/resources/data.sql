@@ -20,16 +20,13 @@ VALUES (
     '11111111-1111-1111-1111-111111111111'
 );
 
-INSERT INTO TURNOS (ID, NOMBRE) VALUES ('11111111-1111-1111-1111-111111111111', 'Mañana');
-INSERT INTO TURNOS (ID, NOMBRE) VALUES ('22222222-2222-2222-2222-222222222222', 'Tarde');
-INSERT INTO TURNOS (ID, NOMBRE) VALUES ('33333333-3333-3333-3333-333333333333', 'Noche');
-
-
-
 INSERT INTO ESTADOS_EMPLEADO (ID, NOMBRE) VALUES ('44444444-4444-4444-4444-444444444444', 'Activo');
 INSERT INTO ESTADOS_EMPLEADO (ID, NOMBRE) VALUES ('55555555-5555-5555-5555-555555555555', 'De Baja');
 INSERT INTO ESTADOS_EMPLEADO (ID, NOMBRE) VALUES ('66666666-6666-6666-6666-666666666666', 'Vacaciones');
 
+INSERT INTO TURNOS (ID, NOMBRE) VALUES ('11111111-1111-1111-1111-111111111111', 'Mañana');
+INSERT INTO TURNOS (ID, NOMBRE) VALUES ('22222222-2222-2222-2222-222222222222', 'Tarde');
+INSERT INTO TURNOS (ID, NOMBRE) VALUES ('33333333-3333-3333-3333-333333333333', 'Noche');
 
 INSERT INTO EMPLEADOS (
     ID, DTYPE, NOMBRE, APELLIDO, DNI, SALARIO, 
@@ -55,8 +52,6 @@ INSERT INTO EMPLEADOS (
     (SELECT ID FROM TURNOS LIMIT 1), (SELECT ID FROM ESTADOS_EMPLEADO LIMIT 1)
 );
 
-
--- 3. Mostrador (Maria)
 INSERT INTO EMPLEADOS (
     ID, DTYPE, NOMBRE, APELLIDO, DNI, SALARIO, 
     PROPIETARIO_ID, -- Dueño: Juan
@@ -70,9 +65,58 @@ INSERT INTO EMPLEADOS (
     (SELECT ID FROM ESTADOS_EMPLEADO LIMIT 1)
 );
 
+-- CAMARERO (Pedro)
+-- Asumiendo que tu columna discriminadora se llama 'ROL' o 'PUESTO'
+-- Si en tu base de datos se llama 'DTYPE' pero no usas herencia, déjalo como DTYPE.
+
+-- CAMARERO (Pedro)
+INSERT INTO EMPLEADOS (
+    ID, 
+    DTYPE,
+    NOMBRE, 
+    APELLIDO, 
+    DNI, 
+    CORREO, 
+    TELEFONO, 
+    SALARIO, 
+    FECHA_NAC, 
+    NEGOCIO_ID, 
+    ESTADO_EMPLEADO_ID, 
+    TURNO_ID, 
+    PROPIETARIO_ID
+) VALUES (
+    'cccccccc-cccc-cccc-cccc-cccccccccccc', 
+    'Camarero',
+    'Pedro', 
+    'Martinez', 
+    '11223344C', 
+    'pedro@esi.es', 
+    '600111222', 
+    1200.00, 
+    '1995-05-20', 
+    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 
+    (SELECT ID FROM ESTADOS_EMPLEADO WHERE NOMBRE = 'Activo' LIMIT 1), 
+    (SELECT ID FROM TURNOS WHERE NOMBRE = 'Tarde' LIMIT 1),
+    (SELECT ID FROM PROPIETARIOS LIMIT 1)
+);
+
 -- CLIENTE DE PRUEBA
 INSERT INTO CLIENTES (ID, NOMBRE, APELLIDO, DNI, CORREO, TELEFONO, PASSWORD)
 VALUES (random_uuid(), 'Pepito', 'Perez', '87654321Z', 'cliente@esi.es', '600123456', '{noop}1234');
+
+-- CLIENTE GENÉRICO (Para pedidos de Barra/Mesa donde no se pide DNI)
+-- ID: eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee
+INSERT INTO CLIENTES (ID, NOMBRE, APELLIDO, DNI, CORREO, PASSWORD, TELEFONO, FECHA_NAC)
+VALUES (
+    'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 
+    'Cliente', 
+    'Generico', 
+    '99999999X', 
+    'mostrador@esi.es', 
+    '{noop}nopass', 
+    '000000000', 
+    '2000-01-01'
+);
 
 
 
@@ -125,9 +169,33 @@ VALUES (random_uuid(), 'Fanta Naranja', 'Refresco de naranja', 2.00, 200, 'https
 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'c2c2c2c2-c2c2-c2c2-c2c2-c2c2c2c2c2c2');
 
 
-
 INSERT INTO estados_pedido (id, nombre) VALUES (random_uuid(), 'RECIBIDO');
 INSERT INTO estados_pedido (id, nombre) VALUES (random_uuid(), 'EN_COCINA');
 INSERT INTO estados_pedido (id, nombre) VALUES (random_uuid(), 'LISTO');
 INSERT INTO estados_pedido (id, nombre) VALUES (random_uuid(), 'ENTREGADO');
 INSERT INTO estados_pedido (id, nombre) VALUES (random_uuid(), 'CANCELADO');
+
+
+INSERT INTO PEDIDOS (ID, FECHA_HORA, METODO_PAGO, PAGADO, TIPO_ENTREGA, CLIENTE_ID, ESTADO_PEDIDO_ID, NEGOCIO_ID)
+VALUES (
+    random_uuid(), 
+    CURRENT_TIMESTAMP, 
+    'TARJETA', 
+    true, 
+    'DOMICILIO', 
+    (SELECT ID FROM CLIENTES LIMIT 1), -- Primer cliente que pille
+    (SELECT ID FROM ESTADOS_PEDIDO WHERE NOMBRE = 'LISTO' LIMIT 1),
+    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' -- Hamburguesas Juan
+);
+
+INSERT INTO PEDIDOS (ID, FECHA_HORA, METODO_PAGO, PAGADO, TIPO_ENTREGA, CLIENTE_ID, ESTADO_PEDIDO_ID, NEGOCIO_ID)
+VALUES (
+    random_uuid(), 
+    CURRENT_TIMESTAMP, 
+    'EFECTIVO', 
+    false, 
+    'DOMICILIO', 
+    (SELECT ID FROM CLIENTES LIMIT 1), 
+    (SELECT ID FROM ESTADOS_PEDIDO WHERE NOMBRE = 'EN_COCINA' LIMIT 1), -- Este también saldrá
+    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+);

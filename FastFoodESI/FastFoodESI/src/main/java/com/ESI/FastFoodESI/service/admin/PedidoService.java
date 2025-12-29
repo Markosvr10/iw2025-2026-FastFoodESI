@@ -57,9 +57,10 @@ public class PedidoService {
 
     // Método nuevo para la vista de Cocina
     public List<Pedido> findPedidosCocina() {
-        return pedidoRepository.findAll().stream()
-                .filter(p -> p.getEstado().getNombre().equals("RECIBIDO") ||
-                        p.getEstado().getNombre().equals("EN_PREPARACION"))
+        List<Pedido> todos = pedidoRepository.findAll();
+        return todos.stream()
+                .filter(p -> "RECIBIDO".equals(p.getEstado().getNombre())
+                        || "EN_COCINA".equals(p.getEstado().getNombre()))
                 .collect(Collectors.toList());
     }
 

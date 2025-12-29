@@ -41,8 +41,12 @@ public class Pedido {
     @JoinColumn(name = "estado_pedido_id", nullable = false)
     private EstadoPedido estado; // Usando la entidad renombrada
 
-    @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<LineaPedido> lineas;
+
+    @ManyToOne
+    @JoinColumn(name = "NEGOCIO_ID") // Esto lo vincula con la columna que pusimos en data.sql
+    private Negocio negocio;
 
     // --- ATRIBUTO CALCULADO ---
 
@@ -51,9 +55,9 @@ public class Pedido {
         if (this.lineas == null || this.lineas.isEmpty()) {
             return BigDecimal.ZERO;
         }
-        
+
         return this.lineas.stream()
-                .map(LineaPedido::getSubtotal) 
+                .map(LineaPedido::getSubtotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
@@ -89,13 +93,21 @@ public class Pedido {
         this.tipoEntrega = tipoEntrega;
     }
 
-    public String getMetodoPago() { return metodoPago; }
-    public void setMetodoPago(String metodoPago) { this.metodoPago = metodoPago; }
+    public String getMetodoPago() {
+        return metodoPago;
+    }
 
-    public boolean isPagado() { return pagado; }
-    public void setPagado(boolean pagado) { this.pagado = pagado; }
+    public void setMetodoPago(String metodoPago) {
+        this.metodoPago = metodoPago;
+    }
 
+    public boolean isPagado() {
+        return pagado;
+    }
 
+    public void setPagado(boolean pagado) {
+        this.pagado = pagado;
+    }
 
     public Cliente getCliente() {
         return cliente;
@@ -119,6 +131,14 @@ public class Pedido {
 
     public void setLineas(Set<LineaPedido> lineas) {
         this.lineas = lineas;
+    }
+
+    public Negocio getNegocio() {
+        return negocio;
+    }
+
+    public void setNegocio(Negocio negocio) {
+        this.negocio = negocio;
     }
 
     // No hay setter para 'importeTotal'

@@ -5,7 +5,7 @@ import com.ESI.FastFoodESI.model.LineaPedido;
 import com.ESI.FastFoodESI.model.Pedido;
 import com.ESI.FastFoodESI.repository.EstadoPedidoRepository;
 import com.ESI.FastFoodESI.service.admin.PedidoService;
-import com.ESI.FastFoodESI.ui.layouts.MainLayout; // Asegúrate de que el package sea correcto (ui.layouts o ui.layout)
+import com.ESI.FastFoodESI.ui.layouts.MainLayout;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -33,83 +33,129 @@ import java.util.List;
 @UIScope
 public class CocinaView extends VerticalLayout {
 
-    // Servicios
     private final PedidoService pedidoService;
     private final EstadoPedidoRepository estadoPedidoRepository;
 
-    // Componentes UI
-    private final FlexLayout contenedorPedidos; // Usamos FlexLayout en vez de Grid para las "tarjetas"
+    // DOS CONTENEDORES: UNO PARA CADA COLUMNA
+    private final VerticalLayout columnaRecibidos;
+    private final VerticalLayout columnaEnCocina;
+
+    // Contenedores internos para las tarjetas (dentro de las columnas)
+    private final FlexLayout contenedorTarjetasRecibidos;
+    private final FlexLayout contenedorTarjetasCocina;
 
     @Autowired
     public CocinaView(PedidoService pedidoService, EstadoPedidoRepository estadoPedidoRepository) {
         this.pedidoService = pedidoService;
         this.estadoPedidoRepository = estadoPedidoRepository;
 
-        // Configuración base de la vista (Igual que EmpleadosView)
         addClassName("cocina-view");
         setSizeFull();
         setPadding(true);
         setSpacing(true);
 
-        // Título y Toolbar
-        add(new H2("Comandas de Cocina"), getToolbar());
+        // --- BARRA SUPERIOR ---
+        HorizontalLayout header = new HorizontalLayout();
+        header.setWidthFull();
+        header.setAlignItems(Alignment.CENTER);
+        header.setJustifyContentMode(JustifyContentMode.BETWEEN);
 
-        // Contenedor principal de tarjetas
-        contenedorPedidos = new FlexLayout();
-        contenedorPedidos.setSizeFull();
-        contenedorPedidos.setFlexWrap(FlexLayout.FlexWrap.WRAP); // Para que bajen si no caben
-        contenedorPedidos.getStyle().set("gap", "20px");
-        contenedorPedidos.getStyle().set("overflow-y", "auto"); // Scroll si hay muchos pedidos
+        Button refreshButton = new Button("Actualizar Tablero", VaadinIcon.REFRESH.create());
+        refreshButton.addClickListener(click -> updateList());
 
-        add(contenedorPedidos);
+        header.add(new H2("Monitor de Cocina (KDS)"), refreshButton);
+        add(header);
 
-        // Cargar datos iniciales
+        // --- ZONA PRINCIPAL (DOS COLUMNAS) ---
+        HorizontalLayout mainLayout = new HorizontalLayout();
+        mainLayout.setSizeFull();
+        mainLayout.setSpacing(true);
+
+        // 1. Configurar Columna Izquierda (RECIBIDOS)
+        columnaRecibidos = new VerticalLayout();
+        columnaRecibidos.addClassName("columna-recibidos");
+        columnaRecibidos.getStyle().set("background-color", "#fff0f0"); // Rojo muy clarito
+        columnaRecibidos.setHeightFull();
+        columnaRecibidos.setWidth("50%");
+
+        contenedorTarjetasRecibidos = crearContenedorTarjetas();
+        columnaRecibidos.add(new H3("🔔 NUEVOS / RECIBIDOS"), new Hr(), contenedorTarjetasRecibidos);
+
+        // 2. Configurar Columna Derecha (EN COCINA)
+        columnaEnCocina = new VerticalLayout();
+        columnaEnCocina.addClassName("columna-cocina");
+        columnaEnCocina.getStyle().set("background-color", "#f0f8ff"); // Azul muy clarito
+        columnaEnCocina.setHeightFull();
+        columnaEnCocina.setWidth("50%");
+
+        contenedorTarjetasCocina = crearContenedorTarjetas();
+        columnaEnCocina.add(new H3("🔥 EN PREPARACIÓN"), new Hr(), contenedorTarjetasCocina);
+
+        // Añadir columnas al layout principal
+        mainLayout.add(columnaRecibidos, columnaEnCocina);
+        add(mainLayout);
+
+        // Cargar datos
         updateList();
     }
 
-    private HorizontalLayout getToolbar() {
-        Button refreshButton = new Button("Actualizar", VaadinIcon.REFRESH.create());
-        refreshButton.addClickListener(click -> updateList());
+    private FlexLayout crearContenedorTarjetas() {
+        FlexLayout layout = new FlexLayout();
+        layout.setFlexDirection(FlexLayout.FlexDirection.COLUMN);
+        layout.setWidthFull();
+        layout.getStyle().set("overflow-y", "auto");
+        layout.getStyle().set("gap", "15px");
 
-        HorizontalLayout toolbar = new HorizontalLayout(refreshButton);
-        toolbar.addClassName("toolbar");
-        return toolbar;
+        // CORRECCIÓN: FlexLayout no tiene setPadding(boolean), usamos CSS:
+        layout.getStyle().set("padding", "10px");
+
+        return layout;
     }
 
-    // Método equivalente al configureGrid pero para tarjetas
     public void updateList() {
-        contenedorPedidos.removeAll();
+        // Limpiamos ambas columnas
+        contenedorTarjetasRecibidos.removeAll();
+        contenedorTarjetasCocina.removeAll();
 
-        // Obtenemos pedidos pendientes (RECIBIDO o EN_PREPARACION)
-        List<Pedido> pedidosPendientes = pedidoService.findPedidosCocina();
+        // Buscamos TODOS los pedidos pendientes
+        // NOTA: Asegúrate de que tu servicio devuelve tanto RECIBIDO como EN_COCINA
+        List<Pedido> pedidos = pedidoService.findPedidosCocina();
 
-        if (pedidosPendientes.isEmpty()) {
-            contenedorPedidos.add(new H3("¡Todo limpio! No hay pedidos pendientes."));
-        } else {
-            for (Pedido p : pedidosPendientes) {
-                contenedorPedidos.add(crearTarjetaComanda(p));
+        if (pedidos.isEmpty()) {
+            Notification.show("No hay comandas activas", 2000, Notification.Position.MIDDLE);
+            return;
+        }
+
+        for (Pedido p : pedidos) {
+            String estado = p.getEstado().getNombre();
+
+            if ("RECIBIDO".equalsIgnoreCase(estado)) {
+                contenedorTarjetasRecibidos.add(crearTarjetaComanda(p, true)); // true = botón rojo
+            } else if ("EN_COCINA".equalsIgnoreCase(estado)) {
+                contenedorTarjetasCocina.add(crearTarjetaComanda(p, false)); // false = botón azul
             }
         }
     }
 
-    // Método auxiliar para diseñar cada "Papelito" de la cocina
-    private Component crearTarjetaComanda(Pedido p) {
+    private Component crearTarjetaComanda(Pedido p, boolean esNuevo) {
         VerticalLayout card = new VerticalLayout();
-        card.setWidth("300px");
+        card.setWidthFull(); // Que ocupe el ancho de su columna
         card.setPadding(true);
         card.setSpacing(false);
-        card.getStyle().set("border", "1px solid #ddd");
-        card.getStyle().set("border-radius", "8px");
-        card.getStyle().set("box-shadow", "0 2px 4px rgba(0,0,0,0.1)");
-        card.getStyle().set("background-color", "white");
 
-        // Cabecera: ID y Hora
+        // Estilos visuales
+        card.getStyle().set("border", esNuevo ? "2px solid #ffcccc" : "2px solid #cce5ff");
+        card.getStyle().set("border-radius", "8px");
+        card.getStyle().set("background-color", "white");
+        card.getStyle().set("box-shadow", "0 2px 4px rgba(0,0,0,0.1)");
+
+        // --- Cabecera ---
         HorizontalLayout header = new HorizontalLayout();
         header.setWidthFull();
         header.setJustifyContentMode(JustifyContentMode.BETWEEN);
 
-        Span idSpan = new Span("Pedido #" + p.getId().toString().substring(0, 4)); // ID corto visual
-        idSpan.getStyle().set("font-weight", "bold");
+        Span idSpan = new Span("#" + p.getId().toString().substring(0, 4));
+        idSpan.getStyle().set("font-weight", "bold").set("font-size", "1.2em");
 
         String hora = p.getFechaHora() != null ? p.getFechaHora().format(DateTimeFormatter.ofPattern("HH:mm"))
                 : "--:--";
@@ -117,56 +163,64 @@ public class CocinaView extends VerticalLayout {
 
         header.add(idSpan, horaSpan);
 
-        // Estado actual (Color visual)
-        Span badgeEstado = new Span(p.getEstado().getNombre());
-        badgeEstado.getElement().getThemeList().add("badge " +
-                (p.getEstado().getNombre().equals("RECIBIDO") ? "error" : "contrast")); // Rojo si es nuevo
+        // --- Mesa ---
+        String infoMesa = p.getTipoEntrega();
+        if (infoMesa == null || infoMesa.isEmpty())
+            infoMesa = "Mostrador";
+        Span mesaSpan = new Span(infoMesa);
+        mesaSpan.getStyle().set("font-weight", "bold").set("color", esNuevo ? "#d32f2f" : "#1976d2");
+        mesaSpan.getStyle().set("font-size", "1.1em");
 
-        // Lista de Productos
+        // --- Lista de Productos ---
         VerticalLayout listaProductos = new VerticalLayout();
         listaProductos.setPadding(false);
         listaProductos.setSpacing(false);
+        listaProductos.getStyle().set("margin-top", "10px");
 
         if (p.getLineas() != null) {
             for (LineaPedido linea : p.getLineas()) {
                 Span item = new Span(linea.getCantidad() + "x " + linea.getProducto().getNombre());
-                item.getStyle().set("font-size", "1.1em");
+                item.getStyle().set("border-bottom", "1px dashed #eee");
                 listaProductos.add(item);
             }
         }
 
-        // Botón de Acción
-        Button btnAccion = new Button("Listo / Marchar");
-        btnAccion.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        // --- Botón de Acción ---
+        Button btnAccion;
+        if (esNuevo) {
+            btnAccion = new Button("MARCHAR A COCINA", VaadinIcon.FIRE.create());
+            btnAccion.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_ERROR); // Rojo
+        } else {
+            btnAccion = new Button("TERMINAR / LISTO", VaadinIcon.CHECK.create());
+            btnAccion.addThemeVariants(ButtonVariant.LUMO_PRIMARY); // Azul
+        }
         btnAccion.setWidthFull();
         btnAccion.addClickListener(e -> avanzarPedido(p));
 
-        // Ensamblar tarjeta
-        card.add(header, badgeEstado, new Hr(), listaProductos, new Hr(), btnAccion);
+        card.add(header, mesaSpan, new Hr(), listaProductos, new Hr(), btnAccion);
         return card;
     }
 
     private void avanzarPedido(Pedido p) {
-        // Lógica: Si está RECIBIDO -> Pasa a EN_PREPARACION. Si está EN_PREPARACION ->
-        // Pasa a LISTO
         String estadoActual = p.getEstado().getNombre();
-        String siguienteEstado = "LISTO"; // Por defecto
+        String siguienteEstado = null;
 
-        if (estadoActual.equals("RECIBIDO")) {
-            siguienteEstado = "EN_PREPARACION";
+        if ("RECIBIDO".equalsIgnoreCase(estadoActual)) {
+            siguienteEstado = "EN_COCINA";
+        } else if ("EN_COCINA".equalsIgnoreCase(estadoActual)) {
+            siguienteEstado = "LISTO";
         }
 
-        // Buscamos el objeto estado en base de datos
-        EstadoPedido nuevoEstadoObj = estadoPedidoRepository.findByNombre(siguienteEstado).orElse(null);
-
-        if (nuevoEstadoObj != null) {
-            pedidoService.modificarEstado(p.getId(), nuevoEstadoObj);
-            Notification.show("Pedido actualizado a " + siguienteEstado)
-                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-            updateList(); // Refrescar pantalla
-        } else {
-            Notification.show("Error: Estado " + siguienteEstado + " no existe en BD",
-                    3000, Notification.Position.MIDDLE).addThemeVariants(NotificationVariant.LUMO_ERROR);
+        if (siguienteEstado != null) {
+            EstadoPedido nuevoEstado = estadoPedidoRepository.findByNombre(siguienteEstado).orElse(null);
+            if (nuevoEstado != null) {
+                pedidoService.modificarEstado(p.getId(), nuevoEstado);
+                Notification.show("Pedido actualizado").addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                updateList();
+            } else {
+                Notification.show("Error: Estado " + siguienteEstado + " no existe")
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            }
         }
     }
 }

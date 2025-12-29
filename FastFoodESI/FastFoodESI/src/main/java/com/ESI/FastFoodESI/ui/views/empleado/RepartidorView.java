@@ -1,0 +1,150 @@
+package com.ESI.FastFoodESI.ui.views.empleado;
+
+import com.ESI.FastFoodESI.model.EstadoPedido;
+import com.ESI.FastFoodESI.model.Negocio;
+import com.ESI.FastFoodESI.model.Pedido;
+import com.ESI.FastFoodESI.repository.EstadoPedidoRepository;
+import com.ESI.FastFoodESI.repository.PedidoRepository;
+import com.ESI.FastFoodESI.ui.layouts.MainLayout;
+import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.data.renderer.ComponentRenderer;
+import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.VaadinSession;
+import jakarta.annotation.security.RolesAllowed;
+
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Optional; // Import necesario
+import java.util.stream.Collectors;
+
+@Route(value = "repartidor", layout = MainLayout.class)
+@PageTitle("Reparto | FastFood ESI")
+@RolesAllowed({ "REPARTIDOR", "PROPIETARIO" })
+public class RepartidorView extends VerticalLayout {
+
+    private final PedidoRepository pedidoRepository;
+    private final EstadoPedidoRepository estadoPedidoRepository;
+    private final Grid<Pedido> gridPedidos = new Grid<>(Pedido.class, false);
+
+    public RepartidorView(PedidoRepository pedidoRepository, EstadoPedidoRepository estadoPedidoRepository) {
+        this.pedidoRepository = pedidoRepository;
+        this.estadoPedidoRepository = estadoPedidoRepository;
+
+        setSizeFull();
+        setAlignItems(Alignment.CENTER);
+
+        add(new H2("Pedidos a Domicilio Pendientes"));
+
+        configurarGrid();
+        cargarPedidos();
+
+        add(gridPedidos);
+    }
+
+    private void configurarGrid() {
+        gridPedidos.setSizeFull();
+
+        // 1. Protección en FECHA
+        gridPedidos.addColumn(p -> {
+            if (p.getFechaHora() == null)
+                return "--:--";
+            return p.getFechaHora().format(DateTimeFormatter.ofPattern("HH:mm"));
+        }).setHeader("Hora").setWidth("100px").setFlexGrow(0);
+
+        // 2. Protección en CLIENTE (Si el cliente es null, explota sin esto)
+        gridPedidos.addColumn(p -> {
+            if (p.getCliente() == null)
+                return "Cliente Anónimo";
+            return p.getCliente().getNombre();
+        }).setHeader("Cliente");
+
+        // 3. Dirección simulada
+        gridPedidos.addColumn(p -> "Calle Ejemplo, 123 (Simulado)")
+                .setHeader("Dirección Entrega").setAutoWidth(true);
+
+        // 4. Protección en ESTADO (Si el estado es null, explota)
+        gridPedidos.addColumn(p -> {
+            if (p.getEstado() == null)
+                return "Sin Estado";
+            return p.getEstado().getNombre();
+        }).setHeader("Estado Actual");
+
+        // Columna de Botones (Igual que antes)
+        gridPedidos.addColumn(new ComponentRenderer<>(pedido -> {
+            HorizontalLayout buttons = new HorizontalLayout();
+
+            Button btnEntregado = new Button("Entregado");
+            btnEntregado.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_PRIMARY);
+            btnEntregado.addClickListener(e -> actualizarEstado(pedido, "ENTREGADO"));
+
+            Button btnCancelado = new Button("Fallido/Cancelado");
+            btnCancelado.addThemeVariants(ButtonVariant.LUMO_ERROR);
+            btnCancelado.addClickListener(e -> actualizarEstado(pedido, "CANCELADO"));
+
+            buttons.add(btnEntregado, btnCancelado);
+            return buttons;
+        })).setHeader("Acciones").setWidth("300px");
+    }
+
+    private void cargarPedidos() {
+        Negocio negocioActivo = (Negocio) VaadinSession.getCurrent().getAttribute("NEGOCIO_ACTIVO");
+
+        if (negocioActivo != null) {
+            List<Pedido> pedidos = pedidoRepository.findByNegocio(negocioActivo);
+
+            // CORRECCIÓN 2: Usar getEstado() en el filtro
+            List<Pedido> filtrados = pedidos.stream()
+                    .filter(p -> "DOMICILIO".equalsIgnoreCase(p.getTipoEntrega()))
+                    .filter(p -> p.getEstado() != null && !p.getEstado().getNombre().equals("ENTREGADO"))
+                    .filter(p -> p.getEstado() != null && !p.getEstado().getNombre().equals("CANCELADO"))
+                    .collect(Collectors.toList());
+
+            gridPedidos.setItems(filtrados);
+
+            if (filtrados.isEmpty()) {
+                Notification.show("No hay repartos pendientes", 3000, Notification.Position.MIDDLE);
+            }
+        } else {
+            UI.getCurrent().navigate("acceso-negocio");
+        }
+    }
+
+    private void actualizarEstado(Pedido pedido, String nuevoEstadoNombre) {
+        // CORRECCIÓN 3: Gestión del Optional con .orElse(null)
+        // Esto soluciona el error "Optional cannot be converted to EstadoPedido"
+        // Si tu repositorio devuelve EstadoPedido directamente, quita el .orElse(null),
+        // pero el error indicaba que devolvía Optional.
+
+        // OPCIÓN A: Si tu repositorio devuelve Optional<EstadoPedido>
+        EstadoPedido nuevoEstado = estadoPedidoRepository.findByNombre(nuevoEstadoNombre).orElse(null);
+
+        // NOTA: Si esto sigue dando error, significa que tu Repositorio devuelve
+        // Optional
+        // Si es así, cámbialo por:
+        // EstadoPedido nuevoEstado =
+        // estadoPedidoRepository.findByNombre(nuevoEstadoNombre).orElse(null);
+
+        if (nuevoEstado != null) {
+            // CORRECCIÓN 4: setEstado() en vez de setEstadoPedido()
+            pedido.setEstado(nuevoEstado);
+            pedidoRepository.save(pedido);
+
+            Notification.show("Pedido marcado como " + nuevoEstadoNombre)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+
+            cargarPedidos();
+        } else {
+            Notification.show("Error: Estado " + nuevoEstadoNombre + " no encontrado en BD",
+                    3000, Notification.Position.MIDDLE).addThemeVariants(NotificationVariant.LUMO_ERROR);
+        }
+    }
+}

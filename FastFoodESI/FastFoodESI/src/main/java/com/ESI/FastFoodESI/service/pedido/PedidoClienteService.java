@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.math.BigDecimal;
 
 @Service
 public class PedidoClienteService {
@@ -41,6 +42,8 @@ public class PedidoClienteService {
         EstadoPedido estadoInicial = estadoPedidoRepository.findByNombre("RECIBIDO")
                 .orElseThrow(() -> new RuntimeException("Estado 'RECIBIDO' no encontrado"));
         pedido.setEstado(estadoInicial);
+
+        pedido.setTotal(BigDecimal.valueOf(carrito.calcularTotal()));
 
         // Guardamos los datos nuevos
         pedido.setTipoEntrega(tipoEntrega);

@@ -110,7 +110,7 @@ public class MainLayout extends AppLayout {
 
             //Mis Pedidos
             subMenu.addItem("Mis Pedidos", e -> {
-                // UI.getCurrent().navigate("mis-pedidos");
+                UI.getCurrent().navigate("mis-pedidos");
             });
 
             // separador visual

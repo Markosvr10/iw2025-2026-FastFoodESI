@@ -32,31 +32,31 @@ import java.util.stream.Collectors;
 @Route(value = "mostrador", layout = MainLayout.class)
 @PageTitle("TPV Mostrador | FastFood ESI")
 @RolesAllowed({ "MOSTRADOR", "PROPIETARIO" })
-public class MostradorView extends VerticalLayout { // Ahora heredamos de VerticalLayout
+public class MostradorView extends VerticalLayout {
 
-    // Repositorios
     private final ProductoRepository productoRepository;
     private final PedidoRepository pedidoRepository;
     private final LineaPedidoRepository lineaPedidoRepository;
     private final ClienteRepository clienteRepository;
     private final EstadoPedidoRepository estadoPedidoRepository;
-    private final TipoProductoRepository tipoProductoRepository;
 
-    // Estado sesión
+    // CAMBIO: Usamos el repositorio original TipoRepository
+    private final TipoRepository tipoRepository;
+
     private Negocio negocioActivo;
 
     // UI General
     private Tabs tabsPrincipales;
-    private Div contenedorContenido; // Aquí cargaremos una vista u otra
+    private Div contenedorContenido;
 
-    // --- VARIABLES PARA PESTAÑA 1: NUEVO PEDIDO ---
+    // Pestaña 1
     private List<LineaPedido> cestaCompra = new ArrayList<>();
     private Grid<Producto> gridProductos;
     private Grid<LineaPedido> gridTicket;
     private Span totalSpan;
     private TextField campoMesa;
 
-    // --- VARIABLES PARA PESTAÑA 2: ENTREGAS ---
+    // Pestaña 2
     private Grid<Pedido> gridEntregas;
 
     public MostradorView(ProductoRepository productoRepository,
@@ -64,14 +64,14 @@ public class MostradorView extends VerticalLayout { // Ahora heredamos de Vertic
             LineaPedidoRepository lineaPedidoRepository,
             ClienteRepository clienteRepository,
             EstadoPedidoRepository estadoPedidoRepository,
-            TipoProductoRepository tipoProductoRepository) {
+            TipoRepository tipoRepository) { // Inyectamos TipoRepository
 
         this.productoRepository = productoRepository;
         this.pedidoRepository = pedidoRepository;
         this.lineaPedidoRepository = lineaPedidoRepository;
         this.clienteRepository = clienteRepository;
         this.estadoPedidoRepository = estadoPedidoRepository;
-        this.tipoProductoRepository = tipoProductoRepository;
+        this.tipoRepository = tipoRepository; // Guardamos
 
         setSizeFull();
         setPadding(false);
@@ -84,7 +84,7 @@ public class MostradorView extends VerticalLayout { // Ahora heredamos de Vertic
         }
 
         configurarPestañas();
-        mostrarPestañaNuevoPedido(); // Cargar la primera por defecto
+        mostrarPestañaNuevoPedido();
     }
 
     private void configurarPestañas() {
@@ -110,9 +110,6 @@ public class MostradorView extends VerticalLayout { // Ahora heredamos de Vertic
         add(tabsPrincipales, contenedorContenido);
     }
 
-    // =========================================================
-    // PESTAÑA 1: NUEVO PEDIDO
-    // =========================================================
     private void mostrarPestañaNuevoPedido() {
         contenedorContenido.removeAll();
 
@@ -125,7 +122,6 @@ public class MostradorView extends VerticalLayout { // Ahora heredamos de Vertic
         contenedorContenido.add(layoutPrincipal);
     }
 
-    // (Este método es igual que antes, solo lo encuadrado en la nueva estructura)
     private Component crearZonaProductos() {
         VerticalLayout layout = new VerticalLayout();
         layout.setWidth("60%");
@@ -134,13 +130,14 @@ public class MostradorView extends VerticalLayout { // Ahora heredamos de Vertic
         H2 titulo = new H2("Catálogo");
 
         Tabs tabsCategorias = new Tabs();
-        List<TipoProducto> tipos = tipoProductoRepository.findAll();
-        Map<Tab, TipoProducto> tabMap = new HashMap<>();
+
+        List<Tipo> tipos = tipoRepository.findAll();
+        Map<Tab, Tipo> tabMap = new HashMap<>();
 
         Tab tabTodo = new Tab("TODO");
         tabsCategorias.add(tabTodo);
 
-        for (TipoProducto tipo : tipos) {
+        for (Tipo tipo : tipos) {
             Tab tab = new Tab(tipo.getNombre());
             tabsCategorias.add(tab);
             tabMap.put(tab, tipo);
@@ -212,9 +209,6 @@ public class MostradorView extends VerticalLayout { // Ahora heredamos de Vertic
         return layout;
     }
 
-    // =========================================================
-    // PESTAÑA 2: ENTREGAS Y COBROS
-    // =========================================================
     private void mostrarPestañaEntregas() {
         contenedorContenido.removeAll();
 
@@ -233,15 +227,13 @@ public class MostradorView extends VerticalLayout { // Ahora heredamos de Vertic
         gridEntregas = new Grid<>(Pedido.class, false);
         gridEntregas.setSizeFull();
 
-        // Columnas
         gridEntregas.addColumn(p -> p.getFechaHora().format(DateTimeFormatter.ofPattern("HH:mm")))
                 .setHeader("Hora").setWidth("100px").setFlexGrow(0);
 
         gridEntregas.addColumn(Pedido::getTipoEntrega).setHeader("Mesa / Ref");
 
-        // Estado Pagado
         gridEntregas.addComponentColumn(p -> {
-            if (Boolean.TRUE.equals(p.isPagado())) {
+            if (p.isPagado()) {
                 Span badge = new Span("PAGADO");
                 badge.getElement().getThemeList().add("badge success");
                 return badge;
@@ -252,23 +244,19 @@ public class MostradorView extends VerticalLayout { // Ahora heredamos de Vertic
             }
         }).setHeader("Estado Pago");
 
-        // ACCIONES
         gridEntregas.addColumn(new ComponentRenderer<>(pedido -> {
             HorizontalLayout actions = new HorizontalLayout();
 
-            // Botón COBRAR (Solo si no está pagado)
-            if (!Boolean.TRUE.equals(pedido.isPagado())) {
+            if (!pedido.isPagado()) {
                 Button btnCobrar = new Button("Cobrar", VaadinIcon.DOLLAR.create());
                 btnCobrar.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_PRIMARY);
                 btnCobrar.addClickListener(e -> cobrarPedido(pedido));
                 actions.add(btnCobrar);
             }
 
-            // Botón ENTREGAR
             Button btnEntregar = new Button("Entregar", VaadinIcon.CHECK.create());
             btnEntregar.addClickListener(e -> cambiarEstado(pedido, "ENTREGADO"));
 
-            // Botón CANCELAR
             Button btnCancelar = new Button(VaadinIcon.CLOSE.create());
             btnCancelar.addThemeVariants(ButtonVariant.LUMO_ERROR);
             btnCancelar.addClickListener(e -> cambiarEstado(pedido, "CANCELADO"));
@@ -284,7 +272,6 @@ public class MostradorView extends VerticalLayout { // Ahora heredamos de Vertic
     }
 
     private void cargarPedidosListos() {
-        // Obtenemos todos los del negocio y filtramos en memoria los que estén LISTO
         List<Pedido> todos = pedidoRepository.findByNegocio(negocioActivo);
 
         List<Pedido> listos = todos.stream()
@@ -302,7 +289,7 @@ public class MostradorView extends VerticalLayout { // Ahora heredamos de Vertic
         pedido.setPagado(true);
         pedidoRepository.save(pedido);
         Notification.show("Pedido cobrado correctamente").addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-        cargarPedidosListos(); // Refrescar para que cambie el badge
+        cargarPedidosListos();
     }
 
     private void cambiarEstado(Pedido pedido, String nuevoEstadoNombre) {
@@ -312,17 +299,14 @@ public class MostradorView extends VerticalLayout { // Ahora heredamos de Vertic
             pedidoRepository.save(pedido);
             Notification.show("Pedido marcado como " + nuevoEstadoNombre)
                     .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-            cargarPedidosListos(); // Desaparecerá de la lista porque ya no es LISTO
+            cargarPedidosListos();
         } else {
             Notification.show("Error: Estado " + nuevoEstadoNombre + " no encontrado")
                     .addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
     }
 
-    // =========================================================
-    // LÓGICA COMÚN (CARGA, GUARDADO...)
-    // =========================================================
-    private void cargarProductos(TipoProducto filtroTipo) {
+    private void cargarProductos(Tipo filtroTipo) {
         List<Producto> productos = productoRepository.findByNegocio(negocioActivo);
         if (filtroTipo != null) {
             productos = productos.stream()
@@ -368,7 +352,7 @@ public class MostradorView extends VerticalLayout { // Ahora heredamos de Vertic
             pedido.setFechaHora(LocalDateTime.now());
             pedido.setNegocio(negocioActivo);
             pedido.setMetodoPago("MOSTRADOR");
-            pedido.setPagado(false); // Por defecto NO pagado hasta que lo cobremos en la pestaña 2
+            pedido.setPagado(false);
 
             String infoMesa = campoMesa.getValue();
             if (infoMesa == null || infoMesa.isEmpty())
@@ -387,6 +371,9 @@ public class MostradorView extends VerticalLayout { // Ahora heredamos de Vertic
             if (estadoRecibido == null)
                 estadoRecibido = estadoPedidoRepository.findByNombre("LISTO").orElse(null);
             pedido.setEstado(estadoRecibido);
+
+            // Importante: Set en lugar de List (si usas mi versión de Pedido)
+            pedido.setLineas(new HashSet<>(cestaCompra));
 
             Pedido pedidoGuardado = pedidoRepository.save(pedido);
 

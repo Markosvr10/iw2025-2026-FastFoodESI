@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
 
 @Route(value = "camarero", layout = MainLayout.class)
 @PageTitle("Comandero | FastFood ESI")
-// Asegúrate de que tus empleados tienen el rol CAMARERO en la base de datos
 @RolesAllowed({ "CAMARERO", "PROPIETARIO" })
 public class CamareroView extends HorizontalLayout {
 
@@ -40,14 +39,14 @@ public class CamareroView extends HorizontalLayout {
     private final LineaPedidoRepository lineaPedidoRepository;
     private final ClienteRepository clienteRepository;
     private final EstadoPedidoRepository estadoPedidoRepository;
-    private final TipoProductoRepository tipoProductoRepository;
+
+    // CAMBIO: Usamos TipoRepository
+    private final TipoRepository tipoRepository;
 
     private Negocio negocioActivo;
 
-    // Carrito en memoria
     private List<LineaPedido> cestaCompra = new ArrayList<>();
 
-    // UI Elements
     private Grid<Producto> gridProductos;
     private Grid<LineaPedido> gridTicket;
     private Span totalSpan;
@@ -58,14 +57,14 @@ public class CamareroView extends HorizontalLayout {
             LineaPedidoRepository lineaPedidoRepository,
             ClienteRepository clienteRepository,
             EstadoPedidoRepository estadoPedidoRepository,
-            TipoProductoRepository tipoProductoRepository) {
+            TipoRepository tipoRepository) { // Inyectamos TipoRepository
 
         this.productoRepository = productoRepository;
         this.pedidoRepository = pedidoRepository;
         this.lineaPedidoRepository = lineaPedidoRepository;
         this.clienteRepository = clienteRepository;
         this.estadoPedidoRepository = estadoPedidoRepository;
-        this.tipoProductoRepository = tipoProductoRepository;
+        this.tipoRepository = tipoRepository; // Guardamos
 
         setSizeFull();
         setSpacing(true);
@@ -77,38 +76,34 @@ public class CamareroView extends HorizontalLayout {
             return;
         }
 
-        // Diseño: Izquierda (Catálogo) - Derecha (Ticket)
         add(crearZonaProductos(), crearZonaTicket());
     }
 
-    // --- ZONA IZQUIERDA: CATÁLOGO DE PRODUCTOS ---
     private Component crearZonaProductos() {
         VerticalLayout layout = new VerticalLayout();
-        layout.setWidth("60%"); // Ocupa más espacio para ver bien los productos
+        layout.setWidth("60%");
         layout.setHeightFull();
 
         H2 titulo = new H2("Carta / Menú");
 
-        // Pestañas de Categorías
         Tabs tabs = new Tabs();
-        List<TipoProducto> tipos = tipoProductoRepository.findAll();
-        Map<Tab, TipoProducto> tabMap = new HashMap<>();
+
+        List<Tipo> tipos = tipoRepository.findAll();
+        Map<Tab, Tipo> tabMap = new HashMap<>();
 
         Tab tabTodo = new Tab("TODO");
         tabs.add(tabTodo);
 
-        for (TipoProducto tipo : tipos) {
+        for (Tipo tipo : tipos) {
             Tab tab = new Tab(tipo.getNombre());
             tabs.add(tab);
             tabMap.put(tab, tipo);
         }
 
-        // Rejilla de productos
         gridProductos = new Grid<>(Producto.class, false);
         gridProductos.addColumn(Producto::getNombre).setHeader("Producto").setAutoWidth(true);
         gridProductos.addColumn(p -> p.getImporte() + " €").setHeader("Precio").setFlexGrow(0);
 
-        // Botón Añadir (+)
         gridProductos.addComponentColumn(producto -> {
             Button btnAdd = new Button(VaadinIcon.PLUS.create());
             btnAdd.addClickListener(e -> agregarAlTicket(producto));
@@ -117,7 +112,6 @@ public class CamareroView extends HorizontalLayout {
 
         cargarProductos(null);
 
-        // Lógica cambio de pestaña
         tabs.addSelectedChangeListener(event -> {
             if (event.getSelectedTab().equals(tabTodo)) {
                 cargarProductos(null);
@@ -130,19 +124,18 @@ public class CamareroView extends HorizontalLayout {
         return layout;
     }
 
-    // --- ZONA DERECHA: TICKET ACTUAL ---
     private Component crearZonaTicket() {
         VerticalLayout layout = new VerticalLayout();
         layout.setWidth("40%");
         layout.setHeightFull();
-        layout.getStyle().set("background-color", "#f0f0f0"); // Fondo gris para diferenciar
+        layout.getStyle().set("background-color", "#f0f0f0");
         layout.setPadding(true);
 
         H4 tituloTicket = new H4("Comanda Actual");
 
         campoMesa = new TextField("Nº Mesa");
         campoMesa.setPlaceholder("Ej: Mesa 10");
-        campoMesa.setAutofocus(true); // Foco directo para escribir la mesa
+        campoMesa.setAutofocus(true);
         campoMesa.setWidthFull();
 
         gridTicket = new Grid<>(LineaPedido.class, false);
@@ -155,7 +148,6 @@ public class CamareroView extends HorizontalLayout {
             return precio.multiply(cantidad) + " €";
         }).setHeader("Subtotal");
 
-        // Botón Eliminar línea
         gridTicket.addComponentColumn(linea -> {
             Button btnDel = new Button(VaadinIcon.TRASH.create());
             btnDel.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_SMALL);
@@ -178,9 +170,7 @@ public class CamareroView extends HorizontalLayout {
         return layout;
     }
 
-    // --- MÉTODOS DE LÓGICA ---
-
-    private void cargarProductos(TipoProducto filtroTipo) {
+    private void cargarProductos(Tipo filtroTipo) {
         List<Producto> productos = productoRepository.findByNegocio(negocioActivo);
         if (filtroTipo != null) {
             productos = productos.stream()
@@ -235,10 +225,9 @@ public class CamareroView extends HorizontalLayout {
             pedido.setFechaHora(LocalDateTime.now());
             pedido.setNegocio(negocioActivo);
             pedido.setMetodoPago("EFECTIVO/TARJETA");
-            pedido.setPagado(false); // Camarero toma nota, aún no cobra
-            pedido.setTipoEntrega(infoMesa); // Aquí guardamos "Mesa 5"
+            pedido.setPagado(false);
+            pedido.setTipoEntrega(infoMesa);
 
-            // Cliente Genérico
             Cliente clienteGenerico = clienteRepository.findByDni("99999999X").orElse(null);
             if (clienteGenerico == null) {
                 Notification.show("Error: Cliente Genérico no encontrado")
@@ -247,13 +236,14 @@ public class CamareroView extends HorizontalLayout {
             }
             pedido.setCliente(clienteGenerico);
 
-            // Estado Inicial: RECIBIDO (Para que salga rojo en cocina)
             EstadoPedido estadoRecibido = estadoPedidoRepository.findByNombre("RECIBIDO").orElse(null);
             if (estadoRecibido == null)
                 estadoRecibido = estadoPedidoRepository.findByNombre("LISTO").orElse(null);
             pedido.setEstado(estadoRecibido);
 
-            // Guardar
+            // Importante: Set
+            pedido.setLineas(new HashSet<>(cestaCompra));
+
             Pedido pedidoGuardado = pedidoRepository.save(pedido);
 
             for (LineaPedido linea : cestaCompra) {
@@ -261,7 +251,6 @@ public class CamareroView extends HorizontalLayout {
                 lineaPedidoRepository.save(linea);
             }
 
-            // Limpieza
             cestaCompra.clear();
             campoMesa.clear();
             actualizarTicket();

@@ -47,9 +47,9 @@ public class Pedido {
     @NotNull
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "estado_pedido_id", nullable = false)
-    private EstadoPedido estado; 
+    private EstadoPedido estado;
 
-    @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<LineaPedido> lineas;
 
     @Transient

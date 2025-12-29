@@ -32,8 +32,8 @@ public class LineaPedido {
     private Pedido pedido;
 
     @NotNull
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "producto_id", nullable = false)
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "producto_id")
     private Producto producto;
 
     // --- ATRIBUTO CALCULADO ---

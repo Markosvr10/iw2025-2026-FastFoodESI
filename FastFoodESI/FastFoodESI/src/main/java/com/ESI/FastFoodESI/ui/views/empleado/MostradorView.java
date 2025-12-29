@@ -247,6 +247,8 @@ public class MostradorView extends VerticalLayout {
         gridEntregas.addColumn(new ComponentRenderer<>(pedido -> {
             HorizontalLayout actions = new HorizontalLayout();
 
+            String nombreEstado = pedido.getEstado() != null ? pedido.getEstado().getNombre() : "";
+
             if (!pedido.isPagado()) {
                 Button btnCobrar = new Button("Cobrar", VaadinIcon.DOLLAR.create());
                 btnCobrar.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_PRIMARY);
@@ -254,16 +256,21 @@ public class MostradorView extends VerticalLayout {
                 actions.add(btnCobrar);
             }
 
-            Button btnEntregar = new Button("Entregar", VaadinIcon.CHECK.create());
-            btnEntregar.addClickListener(e -> cambiarEstado(pedido, "ENTREGADO"));
+            if (!"ENTREGADO".equalsIgnoreCase(nombreEstado)) {
+                Button btnEntregar = new Button("Entregar", VaadinIcon.CHECK.create());
+                btnEntregar.addClickListener(e -> cambiarEstado(pedido, "ENTREGADO"));
+                actions.add(btnEntregar);
+            }
 
-            Button btnCancelar = new Button(VaadinIcon.CLOSE.create());
-            btnCancelar.addThemeVariants(ButtonVariant.LUMO_ERROR);
-            btnCancelar.addClickListener(e -> cambiarEstado(pedido, "CANCELADO"));
+            if (!"ENTREGADO".equalsIgnoreCase(nombreEstado) && !pedido.isPagado()) {
+                Button btnCancelar = new Button(VaadinIcon.CLOSE.create());
+                btnCancelar.addThemeVariants(ButtonVariant.LUMO_ERROR);
+                btnCancelar.addClickListener(e -> cambiarEstado(pedido, "CANCELADO"));
+                actions.add(btnCancelar);
+            }
 
-            actions.add(btnEntregar, btnCancelar);
             return actions;
-        })).setHeader("Acciones").setWidth("350px");
+        })).setHeader("Acciones").setWidth("380px");
 
         layout.add(header, gridEntregas);
         contenedorContenido.add(layout);
@@ -274,14 +281,26 @@ public class MostradorView extends VerticalLayout {
     private void cargarPedidosListos() {
         List<Pedido> todos = pedidoRepository.findByNegocio(negocioActivo);
 
-        List<Pedido> listos = todos.stream()
-                .filter(p -> p.getEstado() != null && "LISTO".equalsIgnoreCase(p.getEstado().getNombre()))
+        List<Pedido> visibles = todos.stream()
+                .filter(p -> {
+                    if (p.getEstado() == null)
+                        return false;
+                    String estado = p.getEstado().getNombre();
+                    boolean pagado = p.isPagado(); // Usamos isPagado()
+
+                    boolean esListo = "LISTO".equalsIgnoreCase(estado);
+
+                    boolean esEntregadoMoroso = "ENTREGADO".equalsIgnoreCase(estado) && !pagado;
+
+                    return esListo || esEntregadoMoroso;
+                })
+                .sorted(Comparator.comparing(Pedido::getFechaHora)) // Ordenar por hora
                 .collect(Collectors.toList());
 
-        gridEntregas.setItems(listos);
+        gridEntregas.setItems(visibles);
 
-        if (listos.isEmpty()) {
-            Notification.show("No hay pedidos listos para recoger", 2000, Notification.Position.MIDDLE);
+        if (visibles.isEmpty()) {
+            Notification.show("Todo limpio: No hay entregas ni cobros pendientes", 3000, Notification.Position.MIDDLE);
         }
     }
 
@@ -372,16 +391,31 @@ public class MostradorView extends VerticalLayout {
                 estadoRecibido = estadoPedidoRepository.findByNombre("LISTO").orElse(null);
             pedido.setEstado(estadoRecibido);
 
-            // Importante: Set en lugar de List (si usas mi versión de Pedido)
-            pedido.setLineas(new HashSet<>(cestaCompra));
+            // --- CORRECCIÓN CLAVE AQUÍ ---
+            // 1. Creamos un Set nuevo para las líneas
+            Set<LineaPedido> lineasParaGuardar = new HashSet<>();
 
-            Pedido pedidoGuardado = pedidoRepository.save(pedido);
+            // 2. Recorremos la cesta y creamos COPIAS de las líneas vinculándolas al pedido
+            for (LineaPedido itemCesta : cestaCompra) {
+                LineaPedido lineaBD = new LineaPedido();
+                lineaBD.setProducto(itemCesta.getProducto());
+                lineaBD.setCantidad(itemCesta.getCantidad());
+                lineaBD.setPrecioUnitario(itemCesta.getPrecioUnitario());
 
-            for (LineaPedido linea : cestaCompra) {
-                linea.setPedido(pedidoGuardado);
-                lineaPedidoRepository.save(linea);
+                // VINCULACIÓN BIDIRECCIONAL IMPORTANTE
+                lineaBD.setPedido(pedido);
+
+                lineasParaGuardar.add(lineaBD);
             }
 
+            // 3. Asignamos las líneas preparadas al pedido
+            pedido.setLineas(lineasParaGuardar);
+
+            // 4. Guardamos SOLO el pedido. Hibernate guardará las líneas automáticamente
+            // por el CascadeType.ALL
+            pedidoRepository.save(pedido);
+
+            // Limpieza
             cestaCompra.clear();
             campoMesa.clear();
             actualizarTicket();

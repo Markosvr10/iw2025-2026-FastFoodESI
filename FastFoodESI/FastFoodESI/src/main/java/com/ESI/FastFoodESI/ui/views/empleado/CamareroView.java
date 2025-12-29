@@ -241,15 +241,25 @@ public class CamareroView extends HorizontalLayout {
                 estadoRecibido = estadoPedidoRepository.findByNombre("LISTO").orElse(null);
             pedido.setEstado(estadoRecibido);
 
-            // Importante: Set
-            pedido.setLineas(new HashSet<>(cestaCompra));
+            // --- CORRECCIÓN CLAVE ---
+            Set<LineaPedido> lineasParaGuardar = new HashSet<>();
 
-            Pedido pedidoGuardado = pedidoRepository.save(pedido);
+            for (LineaPedido itemCesta : cestaCompra) {
+                LineaPedido lineaBD = new LineaPedido();
+                lineaBD.setProducto(itemCesta.getProducto());
+                lineaBD.setCantidad(itemCesta.getCantidad());
+                lineaBD.setPrecioUnitario(itemCesta.getPrecioUnitario());
 
-            for (LineaPedido linea : cestaCompra) {
-                linea.setPedido(pedidoGuardado);
-                lineaPedidoRepository.save(linea);
+                // VINCULAR
+                lineaBD.setPedido(pedido);
+
+                lineasParaGuardar.add(lineaBD);
             }
+
+            pedido.setLineas(lineasParaGuardar);
+
+            // GUARDAR PADRE (y cascada hijos)
+            pedidoRepository.save(pedido);
 
             cestaCompra.clear();
             campoMesa.clear();

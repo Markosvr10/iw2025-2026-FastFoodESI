@@ -24,6 +24,7 @@ import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
+import com.vaadin.flow.component.orderedlayout.Scroller;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -103,7 +104,16 @@ public class CartaView extends VerticalLayout {
         // Carga inicial
         filtrarProductos();
 
-        add(topBar, tabsCategorias, contenedorTarjetas);
+        //scroll del buscador, el botón del carrito y las categorías
+        Scroller scroller = new Scroller(contenedorTarjetas);
+        scroller.setSizeFull();
+        scroller.setScrollDirection(Scroller.ScrollDirection.VERTICAL);
+
+        setPadding(false);
+
+        add(topBar, tabsCategorias, scroller);
+
+        expand(scroller);
     }
 
     //------------------------------------------------------------------------------------------------------------------

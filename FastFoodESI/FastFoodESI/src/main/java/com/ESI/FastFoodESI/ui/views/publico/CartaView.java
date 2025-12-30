@@ -100,8 +100,6 @@ public class CartaView extends VerticalLayout {
         contenedorTarjetas.getStyle().set("gap", "20px");
         contenedorTarjetas.setJustifyContentMode(JustifyContentMode.CENTER);
 
-        // --- CORRECCIÓN AQUÍ ---
-        // FlexLayout no tiene setPadding(boolean), usamos CSS:
         contenedorTarjetas.getStyle().set("padding", "20px");
         // -----------------------
 
@@ -154,7 +152,7 @@ public class CartaView extends VerticalLayout {
         imagenDiv.getStyle().set("justify-content", "center");
         imagenDiv.getStyle().set("border-radius", "12px");
 
-        if (p.getImagenUrl() != null && p.getImagenUrl().startsWith("http")) {
+        if (p.getImagenUrl() != null && !p.getImagenUrl().isEmpty()) {
             Image img = new Image(p.getImagenUrl(), p.getNombre());
             img.setWidthFull();
             img.setHeight("100%");

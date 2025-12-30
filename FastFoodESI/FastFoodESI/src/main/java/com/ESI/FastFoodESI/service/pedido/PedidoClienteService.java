@@ -33,7 +33,7 @@ public class PedidoClienteService {
 
     //metodo de pago
     @Transactional
-    public Pedido confirmarPedido(CarritoService carrito, Cliente cliente, String tipoEntrega, String metodoPago) {
+    public Pedido confirmarPedido(CarritoService carrito, Cliente cliente, String tipoEntrega, String metodoPago, String direccion) {
 
         Pedido pedido = new Pedido();
         pedido.setCliente(cliente);

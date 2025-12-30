@@ -37,6 +37,7 @@ public class PerfilView extends VerticalLayout {
     private final TextField nombre = new TextField("Nombre");
     private final TextField apellido = new TextField("Apellido");
     private final TextField telefono = new TextField("Teléfono");
+    private final TextField direccion = new TextField("Dirección Predeterminada");
     private final TextField dni = new TextField("DNI");
     private final EmailField correo = new EmailField("Correo Electrónico");
     private final PasswordField password = new PasswordField("Nueva Contraseña");
@@ -69,11 +70,13 @@ public class PerfilView extends VerticalLayout {
 
         // Formulario
         FormLayout formLayout = new FormLayout();
-        formLayout.add(dni, correo, nombre, apellido, telefono, password, passwordConfirm);
+        formLayout.add(dni, correo, nombre, apellido, telefono, direccion, password, passwordConfirm);
+
+        formLayout.setColspan(direccion, 2);
 
         formLayout.setResponsiveSteps(
-                new FormLayout.ResponsiveStep("0", 1), // Si es pantalla pequeña -> 1 columna
-                new FormLayout.ResponsiveStep("500px", 2) // Si es pantalla normal -> 2 columnas
+                new FormLayout.ResponsiveStep("0", 1),
+                new FormLayout.ResponsiveStep("500px", 2)
         );
 
         // Botones
@@ -96,6 +99,7 @@ public class PerfilView extends VerticalLayout {
     private void configurarCampos() {
         dni.setReadOnly(true);
         correo.setReadOnly(true);
+        direccion.setPlaceholder("Ej: Calle Falsa 123, 2ºB, 28000 Madrid");
         password.setPlaceholder("Escribir nueva contraseña");
         password.setRevealButtonVisible(true);
         passwordConfirm.setPlaceholder("Repetir contraseña para confirmar");
@@ -114,6 +118,7 @@ public class PerfilView extends VerticalLayout {
                 correo.setValue(clienteActual.getCorreo());
                 if (clienteActual.getTelefono() != null)
                     telefono.setValue(clienteActual.getTelefono());
+                if (clienteActual.getDireccion() != null) direccion.setValue(clienteActual.getDireccion());
             }
         }
     }
@@ -140,6 +145,8 @@ public class PerfilView extends VerticalLayout {
         clienteActual.setNombre(nombre.getValue());
         clienteActual.setApellido(apellido.getValue());
         clienteActual.setTelefono(telefono.getValue());
+
+        clienteActual.setDireccion(direccion.getValue());
 
         try {
             clienteRepository.save(clienteActual);

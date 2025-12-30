@@ -40,8 +40,8 @@ public class Cliente {
 
     private String telefono;
 
-    @Past(message = "La fecha de nacimiento debe ser en el pasado")
-    private LocalDate fechaNac; 
+    @Column(length = 500)
+    private String direccion;
 
     // --- RELACIONES ---
 
@@ -53,12 +53,12 @@ public class Cliente {
     public Cliente() {
     }
 
-    public Cliente(String nombre, String apellido, String dni, String correo, LocalDate fechaNac) {
+    public Cliente(String nombre, String apellido, String dni, String correo, String direccion) {
         this.nombre = nombre;
         this.apellido = apellido;
         this.dni = dni;
         this.correo = correo;
-        this.fechaNac = fechaNac;
+        this.direccion = direccion;
     }
 
     // --- GETTERS Y SETTERS ---
@@ -111,13 +111,8 @@ public class Cliente {
         this.telefono = telefono;
     }
 
-    public LocalDate getFechaNac() {
-        return fechaNac;
-    }
-
-    public void setFechaNac(LocalDate fechaNac) {
-        this.fechaNac = fechaNac;
-    }
+    public String getDireccion() { return direccion; }
+    public void setDireccion(String direccion) { this.direccion = direccion; }
 
     public Set<Pedido> getPedidos() {
         return pedidos;

@@ -132,6 +132,18 @@ public class CarritoView extends VerticalLayout {
                 UI.getCurrent().navigate("login");
                 return;
             }
+            Cliente clienteReal = null;
+            UserDetails userDetails = securityService.getAuthenticatedUser();
+            if (userDetails != null) {
+                Optional<Cliente> c = clienteRepository.findByCorreo(userDetails.getUsername());
+                if (c.isPresent()) {
+                    clienteReal = c.get();
+                }
+            }
+            if (clienteReal == null) {
+                Notification.show("Error: No se encontró tu usuario").addThemeVariants(NotificationVariant.LUMO_ERROR);
+                return;
+            }
 
             // VENTANITA QUE SALE AL DARLE A CONFIRMAR
             Dialog dialog = new Dialog();
@@ -147,6 +159,26 @@ public class CarritoView extends VerticalLayout {
             selectTipo.setItems("Para llevar (Recoger)", "Comer aquí (Mesa)", "A Domicilio");
             selectTipo.setValue("Para llevar (Recoger)");
             selectTipo.setWidthFull();
+
+            //CAMPO DIRECCIÓN
+            TextField txtDireccion = new TextField("Dirección de Entrega");
+            txtDireccion.setWidthFull();
+            txtDireccion.setPlaceholder("Calle, Número, Piso...");
+            txtDireccion.setVisible(false); // Oculto por defecto
+
+            // Si el cliente ya tiene una dirección guardada, se la ponemos
+            if (clienteReal.getDireccion() != null && !clienteReal.getDireccion().isEmpty()) {
+                txtDireccion.setValue(clienteReal.getDireccion());
+            }
+
+            // Lógica: Si selecciona "A Domicilio", mostramos el campo. Si no, lo ocultamos.
+            selectTipo.addValueChangeListener(ev -> {
+                if ("A Domicilio".equals(ev.getValue())) {
+                    txtDireccion.setVisible(true);
+                } else {
+                    txtDireccion.setVisible(false);
+                }
+            });
 
             // MÉTODO DE PAGO
             Select<String> selectPago = new Select<>();
@@ -211,21 +243,36 @@ public class CarritoView extends VerticalLayout {
                 layoutEfectivo.setVisible("Efectivo".equals(val));
             });
 
-            dialogLayout.add(selectTipo, selectPago, layoutTarjeta, layoutPaypal, layoutEfectivo);
+            dialogLayout.add(selectTipo, txtDireccion, selectPago, layoutTarjeta, layoutPaypal, layoutEfectivo);
             dialog.add(dialogLayout);
 
             // boton cancelar
             Button cancelar = new Button("Cancelar", event -> dialog.close());
+            Cliente finalClienteReal = clienteReal;
+
 
             // boton confirmar y pagar
             Button btnPagar = new Button("Confirmar y Pagar " + String.format("%.2f €", carritoService.calcularTotal()),
                     event -> {
 
                         String metodo = selectPago.getValue();
+                        String tipo = selectTipo.getValue();
                         boolean validacionCorrecta = true;
 
                         // --- VALIDACIONES
                         // ------------------------------------------------------------------------------------
+                        // --- VALIDAR DIRECCIÓN ---
+                        String direccionFinal = ""; // Por defecto vacía
+                        if ("A Domicilio".equals(tipo)) {
+                            if (txtDireccion.isEmpty()) {
+                                Notification.show("Debes escribir una dirección de entrega").addThemeVariants(NotificationVariant.LUMO_ERROR);
+                                return;
+                            }
+                            direccionFinal = txtDireccion.getValue();
+                        }
+
+
+
                         if ("Tarjeta Bancaria".equals(metodo)) {
                             // Validar Tarjeta (16 dígitos y que no esté vacía)
                             if (txtNumTarjeta.isEmpty() || !txtNumTarjeta.getValue().matches("\\d{16}")) {
@@ -262,29 +309,14 @@ public class CarritoView extends VerticalLayout {
                         if (!validacionCorrecta)
                             return;
 
-                        // ASIGNAR EL CLIENTE A DICHO PEDIDO (LÓGICA DEL MAIN - CORRECTA)
-                        Cliente clienteReal = null;
-                        UserDetails userDetails = securityService.getAuthenticatedUser();
-
-                        if (userDetails != null) {
-                            Optional<Cliente> c = clienteRepository.findByCorreo(userDetails.getUsername());
-                            if (c.isPresent()) {
-                                clienteReal = c.get(); // lo asignamos
-                            }
-                        }
-
-                        if (clienteReal == null) {
-                            Notification.show("Error crítico: No se encontró tu usuario cliente en la base de datos.")
-                                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
-                            return;
-                        }
 
                         try {
                             pedidoService.confirmarPedido(
                                     carritoService,
-                                    clienteReal,
+                                    finalClienteReal,
                                     selectTipo.getValue(),
-                                    metodo);
+                                    metodo,
+                                    direccionFinal);
 
                             Notification.show("¡Pedido confirmado! (" + metodo + ") 🍔")
                                     .addThemeVariants(NotificationVariant.LUMO_SUCCESS);

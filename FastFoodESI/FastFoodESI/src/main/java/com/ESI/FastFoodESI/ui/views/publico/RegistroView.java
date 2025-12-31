@@ -9,6 +9,7 @@ import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
@@ -102,8 +103,7 @@ public class RegistroView extends VerticalLayout {
             if (binder.writeBeanIfValid(nuevoCliente)) {
                 try {
                     clienteService.registrarCliente(nuevoCliente);
-
-                    Notification.show("¡Cuenta creada con éxito! Ahora inicia sesión.")
+                    Notification.show("Registro exitoso. 📧 Revisa tu email para activar la cuenta.")
                             .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 
                     // redirigir al login

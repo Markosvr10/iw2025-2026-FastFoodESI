@@ -43,6 +43,12 @@ public class Cliente {
     @Column(length = 500)
     private String direccion;
 
+    //verificacion
+    @Column(columnDefinition = "boolean default false")
+    private boolean verificado = false;
+    private String codigoVerificacion;
+
+
     // --- RELACIONES ---
 
     @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -124,4 +130,10 @@ public class Cliente {
 
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
+
+    public boolean isVerificado() { return verificado; }
+    public void setVerificado(boolean verificado) { this.verificado = verificado; }
+
+    public String getCodigoVerificacion() { return codigoVerificacion; }
+    public void setCodigoVerificacion(String codigoVerificacion) { this.codigoVerificacion = codigoVerificacion; }
 }

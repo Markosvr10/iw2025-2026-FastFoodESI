@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.core.Authentication;
 
 import java.util.Optional;
 
@@ -40,26 +42,39 @@ public class SecurityService implements UserDetailsService {
                     .build();
         }
 
-        // BUSCAR CLIENTE
-        Optional<Cliente> cliente = clienteRepository.findByCorreo(username);
-        if (cliente.isPresent()) {
+        //verificacion
+        Optional<Cliente> clienteOpt = clienteRepository.findByCorreo(username);
+
+        if (clienteOpt.isPresent()) {
+            Cliente cliente = clienteOpt.get();
+
+            // comprobamos si esta verificado
+            if (!cliente.isVerificado()) {
+                throw new DisabledException("Tu cuenta no está verificada. Revisa tu correo.");
+            }
+            // -------------------------------------------
+
+            // Si está verificado, creamos el usuario para el login
             return User.builder()
-                    .username(cliente.get().getCorreo())
-                    .password(cliente.get().getPassword())
+                    .username(cliente.getCorreo())
+                    .password(cliente.getPassword())
                     .roles("CLIENTE")
                     .build();
         }
 
-        // SI NO EXISTE
-        throw new UsernameNotFoundException("Usuario no encontrado");
+        // si no es propietario ni cliente
+        throw new UsernameNotFoundException("Usuario no encontrado: " + username);
     }
 
     public UserDetails getAuthenticatedUser() {
         SecurityContext context = SecurityContextHolder.getContext();
-        Object principal = context.getAuthentication().getPrincipal();
-        if (principal instanceof UserDetails) {
-            return (UserDetails) principal;
+        Authentication auth = context.getAuthentication();
+
+        // Comprobamos que auth no sea null para evitar errores
+        if (auth != null && auth.getPrincipal() instanceof UserDetails) {
+            return (UserDetails) auth.getPrincipal();
         }
         return null;
     }
+
 }

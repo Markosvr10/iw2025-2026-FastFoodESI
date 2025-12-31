@@ -40,7 +40,10 @@ public class ClienteService {
         // generar código de verificación
         String codigo = UUID.randomUUID().toString();
         cliente.setCodigoVerificacion(codigo);
-        cliente.setVerificado(false); // Nace bloqueado
+
+        //***************************************************
+        //PONER EN FALSEE -> SIMPLEMENTE ES PARA Q NO TENGAN QUE VERIFICAR EL CORRO CON EL MAILTRAP PARA LAS PRUEBAS
+        cliente.setVerificado(true);// Nace bloqueado
 
         // guardar en BD
         clienteRepository.save(cliente);
@@ -91,5 +94,9 @@ public class ClienteService {
             return true;
         }
         return false;
+    }
+
+    public void eliminarCliente(UUID id) {
+        clienteRepository.deleteById(id);
     }
 }

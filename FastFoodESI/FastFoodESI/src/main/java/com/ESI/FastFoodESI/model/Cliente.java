@@ -48,6 +48,9 @@ public class Cliente {
     private boolean verificado = false;
     private String codigoVerificacion;
 
+    //olvidar contraseña
+    private String tokenRecuperacion;
+
 
     // --- RELACIONES ---
 
@@ -131,9 +134,16 @@ public class Cliente {
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
 
+    //------------------------------------------------------------------------------------
+
     public boolean isVerificado() { return verificado; }
     public void setVerificado(boolean verificado) { this.verificado = verificado; }
 
     public String getCodigoVerificacion() { return codigoVerificacion; }
     public void setCodigoVerificacion(String codigoVerificacion) { this.codigoVerificacion = codigoVerificacion; }
+
+    //------------------------------------------------------------------------------------
+
+    public String getTokenRecuperacion() { return tokenRecuperacion; }
+    public void setTokenRecuperacion(String tokenRecuperacion) { this.tokenRecuperacion = tokenRecuperacion; }
 }

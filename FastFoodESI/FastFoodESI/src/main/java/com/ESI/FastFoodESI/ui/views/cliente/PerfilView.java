@@ -2,8 +2,10 @@ package com.ESI.FastFoodESI.ui.views.cliente;
 
 import com.ESI.FastFoodESI.model.Cliente;
 import com.ESI.FastFoodESI.repository.ClienteRepository;
+import com.ESI.FastFoodESI.service.cliente.ClienteService;
 import com.ESI.FastFoodESI.security.SecurityService;
 import com.ESI.FastFoodESI.ui.layouts.MainLayout;
+import com.ESI.FastFoodESI.ui.views.cliente.PoliticaPrivacidadView;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -22,6 +24,9 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 import jakarta.annotation.security.RolesAllowed;
 import org.springframework.security.core.userdetails.UserDetails;
+import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.html.Hr;
+import com.vaadin.flow.router.RouterLink;
 
 import java.util.Optional;
 
@@ -32,6 +37,7 @@ public class PerfilView extends VerticalLayout {
 
     private final ClienteRepository clienteRepository;
     private final SecurityService securityService;
+    private final ClienteService clienteService;
 
     // Campos
     private final TextField nombre = new TextField("Nombre");
@@ -45,9 +51,10 @@ public class PerfilView extends VerticalLayout {
 
     private Cliente clienteActual;
 
-    public PerfilView(ClienteRepository clienteRepository, SecurityService securityService) {
+    public PerfilView(ClienteRepository clienteRepository, SecurityService securityService, ClienteService clienteService) {
         this.clienteRepository = clienteRepository;
         this.securityService = securityService;
+        this.clienteService = clienteService;
 
         setSizeFull();
 
@@ -85,12 +92,49 @@ public class PerfilView extends VerticalLayout {
         btnGuardar.setWidthFull();
         btnGuardar.addClickListener(e -> guardarDatos());
 
+        Hr separador = new Hr();
+
+        // POLÍTICA DE PRIVACIDAD -> Cumplimiento GDPR
+        RouterLink linkPrivacidad = new RouterLink("Ver Política de Privacidad y Uso de Datos", PoliticaPrivacidadView.class);
+        linkPrivacidad.getStyle().set("font-size", "0.9em");
+        linkPrivacidad.getStyle().set("color", "gray");
+
+        VerticalLayout linkLayout = new VerticalLayout(linkPrivacidad);
+        linkLayout.setAlignItems(Alignment.CENTER);
+        linkLayout.setPadding(false);
+
+        // ELIMINAR CUENTA
+        Button btnEliminarCuenta = new Button("Eliminar mi cuenta y mis datos", VaadinIcon.TRASH.create());
+        btnEliminarCuenta.addThemeVariants(ButtonVariant.LUMO_ERROR);
+        btnEliminarCuenta.setWidthFull();
+
+        btnEliminarCuenta.addClickListener(e -> {
+            // confirmación
+            Dialog dialog = new Dialog();
+            dialog.setHeaderTitle("¿Estás seguro?");
+            dialog.add("Esta acción es irreversible. Se borrarán todos tus datos de forma permanente.");
+
+            Button btnConfirmar = new Button("Sí, eliminar", event -> {
+                // servicio
+                clienteService.eliminarCliente(clienteActual.getId());
+                dialog.close();
+
+                cerrarSesion();
+            });
+            btnConfirmar.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_ERROR);
+
+            Button btnCancelar = new Button("Cancelar", event -> dialog.close());
+
+            dialog.getFooter().add(btnCancelar, btnConfirmar);
+            dialog.open();
+        });
+
         Button btnLogout = new Button("Cerrar Sesión", VaadinIcon.SIGN_OUT.create());
         btnLogout.addThemeVariants(ButtonVariant.LUMO_ERROR);
         btnLogout.setWidthFull();
         btnLogout.addClickListener(e -> cerrarSesion());
 
-        tarjetaCentral.add(titulo, formLayout, btnGuardar, btnLogout);
+        tarjetaCentral.add(titulo, formLayout, btnGuardar, separador, linkLayout, btnEliminarCuenta, btnLogout);
 
         add(tarjetaCentral);
         cargarDatosCliente();

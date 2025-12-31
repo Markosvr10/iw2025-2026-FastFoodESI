@@ -95,4 +95,8 @@ public class ClienteService {
         }
         return false;
     }
+
+    public void eliminarCliente(UUID id) {
+        clienteRepository.deleteById(id);
+    }
 }

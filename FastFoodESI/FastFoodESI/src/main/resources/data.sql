@@ -21,13 +21,13 @@ INSERT INTO estados_pedido (id, nombre) VALUES (random_uuid(), 'ENTREGADO');
 INSERT INTO estados_pedido (id, nombre) VALUES (random_uuid(), 'CANCELADO');
 
 -- TIPOS DE PRODUCTO
-INSERT INTO tipos_producto (id, nombre) VALUES (random_uuid(), 'Hamburguesa');
+INSERT INTO tipos_producto (id, nombre) VALUES (random_uuid(), 'Hamburguesas');
 INSERT INTO tipos_producto (id, nombre) VALUES (random_uuid(), 'Pizzas'); 
-INSERT INTO tipos_producto (id, nombre) VALUES (random_uuid(), 'Bebida');
-INSERT INTO tipos_producto (id, nombre) VALUES (random_uuid(), 'Complemento');
-INSERT INTO tipos_producto (id, nombre) VALUES (random_uuid(), 'Postre');
-INSERT INTO tipos_producto (id, nombre) VALUES (random_uuid(), 'Menu'); 
-INSERT INTO tipos_producto (id, nombre) VALUES (random_uuid(), 'Oferta');
+INSERT INTO tipos_producto (id, nombre) VALUES (random_uuid(), 'Bebidas');
+INSERT INTO tipos_producto (id, nombre) VALUES (random_uuid(), 'Complementos');
+INSERT INTO tipos_producto (id, nombre) VALUES (random_uuid(), 'Postres');
+INSERT INTO tipos_producto (id, nombre) VALUES (random_uuid(), 'Menus');
+INSERT INTO tipos_producto (id, nombre) VALUES (random_uuid(), 'Ofertas');
 
 -- ==========================================
 -- 2. ACTORES (Propietarios, Negocios, Clientes)
@@ -42,11 +42,9 @@ INSERT INTO propietarios (id, nombre, apellido, dni, correo, password, fecha_nac
 VALUES (random_uuid(), 'Juan', 'Dueño', '87654321B', 'juan@esi.es', '{noop}pass123', '1985-05-05');
 
 -- Clientes
-INSERT INTO clientes (id, dni, nombre, apellido, correo) 
-VALUES (random_uuid(), '99999999C', 'Cliente', 'Gastón', 'cliente@test.com');
 
 INSERT INTO clientes (id, nombre, apellido, dni, correo, telefono, password)
-VALUES (random_uuid(), 'Pepito', 'Perez', '87654321Z', 'cliente@esi.es', '600123456', '{noop}1234');
+VALUES (random_uuid(), 'Pepito', 'Perez', '87654321Z', 'cliente@esi.es', '600123456', '1234');
 
 -- NEGOCIOS
 INSERT INTO negocios (id, nombre, direccion, telefono, propietario_id) 
@@ -95,26 +93,113 @@ VALUES (
 -- 4. PRODUCTOS
 -- ==========================================
 
--- Productos Hamburguesería
-INSERT INTO productos (id, nombre, descripcion, importe, stock, tipo_id, negocio_id)
-VALUES (random_uuid(), 'Big Burger', 'Doble carne', 10.50, 100, 
-(SELECT id FROM tipos_producto WHERE nombre='Hamburguesa'),
+INSERT INTO productos (id, nombre, descripcion, importe, stock, imagen_url, tipo_id, negocio_id)
+VALUES (random_uuid(), 'Big Burger', 'Doble carne', 10.50, 100,
+'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=500',
+(SELECT id FROM tipos_producto WHERE nombre='Hamburguesas'),
 (SELECT id FROM negocios WHERE nombre='Burgers ESI Centro'));
 
-INSERT INTO productos (id, nombre, descripcion, importe, stock, tipo_id, negocio_id)
-VALUES (random_uuid(), 'Kevin Bacon', 'Carne con bacon crujiente', 12.50, 100, 
-(SELECT id FROM tipos_producto WHERE nombre='Hamburguesa'),
+-- 2. Kevin Bacon (Con FOTO)
+INSERT INTO productos (id, nombre, descripcion, importe, stock, imagen_url, tipo_id, negocio_id)
+VALUES (random_uuid(), 'Kevin Bacon', 'Carne con bacon crujiente', 12.50, 100,
+'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&w=500',
+(SELECT id FROM tipos_producto WHERE nombre='Hamburguesas'),
 (SELECT id FROM negocios WHERE nombre='Burgers ESI Centro'));
 
-INSERT INTO productos (id, nombre, descripcion, importe, stock, tipo_id, negocio_id)
-VALUES (random_uuid(), 'Coca Cola Zero', 'Sin azúcar', 2.50, 200, 
-(SELECT id FROM tipos_producto WHERE nombre='Bebida'),
+-- 3. Coca Cola Zero (Con FOTO)
+INSERT INTO productos (id, nombre, descripcion, importe, stock, imagen_url, tipo_id, negocio_id)
+VALUES (random_uuid(), 'Coca Cola Zero', 'Sin azúcar', 2.50, 200,
+'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=500',
+(SELECT id FROM tipos_producto WHERE nombre='Bebidas'),
 (SELECT id FROM negocios WHERE nombre='Burgers ESI Centro'));
 
--- Productos Pizzería
-INSERT INTO productos (id, nombre, descripcion, importe, stock, tipo_id, negocio_id)
-VALUES (random_uuid(), 'Pizza Margarita', 'Tomate, mozzarella y albahaca', 8.50, 50, 
+-- 4. Pizza Margarita (Con FOTO)
+INSERT INTO productos (id, nombre, descripcion, importe, stock, imagen_url, tipo_id, negocio_id)
+VALUES (random_uuid(), 'Pizza Margarita', 'Tomate, mozzarella y albahaca', 8.50, 50,
+'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=500',
 (SELECT id FROM tipos_producto WHERE nombre='Pizzas'),
+(SELECT id FROM negocios WHERE nombre='Pizzería Campus'));
+
+-- 1. HAMBURGUESAS (Usan 'Burgers ESI Centro')
+
+INSERT INTO productos (id, nombre, descripcion, importe, stock, imagen_url, tipo_id, negocio_id)
+VALUES (random_uuid(), 'Veggie Deluxe', 'Hamburguesa vegana de lentejas y aguacate', 11.00, 30,
+'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=500',
+(SELECT id FROM tipos_producto WHERE nombre='Hamburguesas'),
+(SELECT id FROM negocios WHERE nombre='Burgers ESI Centro'));
+
+
+-- 2. PIZZAS (Usan 'Pizzería Campus')
+INSERT INTO productos (id, nombre, descripcion, importe, stock, imagen_url, tipo_id, negocio_id)
+VALUES (random_uuid(), 'Pepperoni Lover', 'Doble de pepperoni y queso extra', 13.50, 40,
+'https://images.unsplash.com/photo-1628840042765-356cda07504e?auto=format&fit=crop&w=500',
+(SELECT id FROM tipos_producto WHERE nombre='Pizzas'),
+(SELECT id FROM negocios WHERE nombre='Pizzería Campus'));
+
+INSERT INTO productos (id, nombre, descripcion, importe, stock, imagen_url, tipo_id, negocio_id)
+VALUES (random_uuid(), '4 Quesos', 'Mozzarella, Gorgonzola, Parmesano y Cheddar', 12.00, 40,
+'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=500',
+(SELECT id FROM tipos_producto WHERE nombre='Pizzas'),
+(SELECT id FROM negocios WHERE nombre='Pizzería Campus'));
+
+
+-- 3. BEBIDAS
+INSERT INTO productos (id, nombre, descripcion, importe, stock, imagen_url, tipo_id, negocio_id)
+VALUES (random_uuid(), 'Fanta Naranja', 'Refresco de naranja con gas', 2.50, 100,
+'https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?auto=format&fit=crop&w=500',
+(SELECT id FROM tipos_producto WHERE nombre='Bebidas'),
+(SELECT id FROM negocios WHERE nombre='Burgers ESI Centro'));
+
+INSERT INTO productos (id, nombre, descripcion, importe, stock, imagen_url, tipo_id, negocio_id)
+VALUES (random_uuid(), 'Agua Mineral', 'Botella de 500ml', 1.50, 150,
+'https://images.unsplash.com/photo-1564419320461-6870880221ad?auto=format&fit=crop&w=500',
+(SELECT id FROM tipos_producto WHERE nombre='Bebidas'),
+(SELECT id FROM negocios WHERE nombre='Burgers ESI Centro'));
+
+
+-- 4. COMPLEMENTOS
+INSERT INTO productos (id, nombre, descripcion, importe, stock, imagen_url, tipo_id, negocio_id)
+VALUES (random_uuid(), 'Nuggets de Pollo', '6 unidades con salsa barbacoa', 4.50, 60,
+'https://images.unsplash.com/photo-1562967914-608f82629710?auto=format&fit=crop&w=500',
+(SELECT id FROM tipos_producto WHERE nombre='Complementos'),
+(SELECT id FROM negocios WHERE nombre='Burgers ESI Centro'));
+
+INSERT INTO productos (id, nombre, descripcion, importe, stock, imagen_url, tipo_id, negocio_id)
+VALUES (random_uuid(), 'Aros de Cebolla', 'Crujientes y dorados', 3.50, 50,
+'https://images.unsplash.com/photo-1639024471283-03518883512d?auto=format&fit=crop&w=500',
+(SELECT id FROM tipos_producto WHERE nombre='Complementos'),
+(SELECT id FROM negocios WHERE nombre='Burgers ESI Centro'));
+
+
+-- 5. POSTRES
+
+INSERT INTO productos (id, nombre, descripcion, importe, stock, imagen_url, tipo_id, negocio_id)
+VALUES (random_uuid(), 'Brownie Chocolate', 'Con nueces y helado', 4.90, 35,
+'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=500',
+(SELECT id FROM tipos_producto WHERE nombre='Postres'),
+(SELECT id FROM negocios WHERE nombre='Pizzería Campus'));
+
+
+-- 6. MENUS
+INSERT INTO productos (id, nombre, descripcion, importe, stock, imagen_url, tipo_id, negocio_id)
+VALUES (random_uuid(), 'Menú Estudiante', 'Burger Clásica + Patatas + Bebida', 12.00, 100,
+'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&w=500',
+(SELECT id FROM tipos_producto WHERE nombre='Menus'),
+(SELECT id FROM negocios WHERE nombre='Burgers ESI Centro'));
+
+
+
+-- 7. OFERTAS
+INSERT INTO productos (id, nombre, descripcion, importe, stock, imagen_url, tipo_id, negocio_id)
+VALUES (random_uuid(), 'Pack Fiesta', '5 Hamburguesas variadas', 35.00, 20,
+'https://images.unsplash.com/photo-1551782450-a2132b4ba21d?auto=format&fit=crop&w=500',
+(SELECT id FROM tipos_producto WHERE nombre='Ofertas'),
+(SELECT id FROM negocios WHERE nombre='Burgers ESI Centro'));
+
+INSERT INTO productos (id, nombre, descripcion, importe, stock, imagen_url, tipo_id, negocio_id)
+VALUES (random_uuid(), 'Martes Loco', 'Pizza Margarita al 50%', 4.25, 200,
+'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=500',
+(SELECT id FROM tipos_producto WHERE nombre='Ofertas'),
 (SELECT id FROM negocios WHERE nombre='Pizzería Campus'));
 
 -- ==========================================

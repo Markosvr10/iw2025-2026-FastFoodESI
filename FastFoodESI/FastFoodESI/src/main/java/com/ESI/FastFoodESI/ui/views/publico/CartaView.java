@@ -207,7 +207,7 @@ public class CartaView extends VerticalLayout implements HasUrlParameter<String>
         imagenDiv.getStyle().set("justify-content", "center");
         imagenDiv.getStyle().set("border-radius", "12px");
 
-        if (p.getImagenUrl() != null && p.getImagenUrl().startsWith("http")) {
+        if (p.getImagenUrl() != null && !p.getImagenUrl().isEmpty()) {
             Image img = new Image(p.getImagenUrl(), p.getNombre());
             img.setWidthFull();
             img.setHeight("100%");

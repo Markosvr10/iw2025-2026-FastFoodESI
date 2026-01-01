@@ -32,9 +32,6 @@ public class InicioView extends VerticalLayout {
         container.setJustifyContentMode(JustifyContentMode.CENTER);
         container.getStyle().set("gap", "30px");
 
-        // 1. Recuadro CLIENTE (De momento no hace nada o lleva a carta pública)
-        container.add(crearCard("Soy Cliente", VaadinIcon.USER, "carta"));
-
         // 2. Recuadro DUEÑO (Lleva al Login normal de Spring Security)
         container.add(crearCard("Soy Dueño", VaadinIcon.BRIEFCASE, "login"));
 

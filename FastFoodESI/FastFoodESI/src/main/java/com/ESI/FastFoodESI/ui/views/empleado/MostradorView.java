@@ -39,8 +39,6 @@ public class MostradorView extends VerticalLayout {
     private final LineaPedidoRepository lineaPedidoRepository;
     private final ClienteRepository clienteRepository;
     private final EstadoPedidoRepository estadoPedidoRepository;
-
-    // CAMBIO: Usamos el repositorio original TipoRepository
     private final TipoRepository tipoRepository;
 
     private Negocio negocioActivo;
@@ -64,14 +62,14 @@ public class MostradorView extends VerticalLayout {
             LineaPedidoRepository lineaPedidoRepository,
             ClienteRepository clienteRepository,
             EstadoPedidoRepository estadoPedidoRepository,
-            TipoRepository tipoRepository) { // Inyectamos TipoRepository
+            TipoRepository tipoRepository) {
 
         this.productoRepository = productoRepository;
         this.pedidoRepository = pedidoRepository;
         this.lineaPedidoRepository = lineaPedidoRepository;
         this.clienteRepository = clienteRepository;
         this.estadoPedidoRepository = estadoPedidoRepository;
-        this.tipoRepository = tipoRepository; // Guardamos
+        this.tipoRepository = tipoRepository;
 
         setSizeFull();
         setPadding(false);
@@ -88,6 +86,22 @@ public class MostradorView extends VerticalLayout {
     }
 
     private void configurarPestañas() {
+        // --- NUEVO: HEADER GLOBAL CON BOTÓN VOLVER ---
+        HorizontalLayout header = new HorizontalLayout();
+        header.setWidthFull();
+        header.setAlignItems(Alignment.CENTER);
+        header.setJustifyContentMode(JustifyContentMode.BETWEEN);
+        header.setPadding(true); // Un poco de margen para que respire
+
+        H2 tituloGeneral = new H2("TPV Mostrador");
+
+        Button btnVolver = new Button("Cambiar Empleado", VaadinIcon.USER.create());
+        btnVolver.addClickListener(e -> UI.getCurrent().navigate(SeleccionEmpleadoView.class));
+
+        header.add(tituloGeneral, btnVolver);
+        add(header);
+        // --------------------------------------------
+
         tabsPrincipales = new Tabs();
         tabsPrincipales.setWidthFull();
 
@@ -127,7 +141,7 @@ public class MostradorView extends VerticalLayout {
         layout.setWidth("60%");
         layout.setHeightFull();
 
-        H2 titulo = new H2("Catálogo");
+        H3 titulo = new H3("Catálogo");
 
         Tabs tabsCategorias = new Tabs();
 
@@ -216,7 +230,7 @@ public class MostradorView extends VerticalLayout {
         layout.setSizeFull();
         layout.setPadding(true);
 
-        H2 titulo = new H2("Pedidos Listos para Entregar / Cobrar");
+        H3 titulo = new H3("Pedidos Listos para Entregar / Cobrar");
 
         Button btnRefrescar = new Button("Actualizar", VaadinIcon.REFRESH.create());
         btnRefrescar.addClickListener(e -> cargarPedidosListos());
@@ -286,15 +300,14 @@ public class MostradorView extends VerticalLayout {
                     if (p.getEstado() == null)
                         return false;
                     String estado = p.getEstado().getNombre();
-                    boolean pagado = p.isPagado(); // Usamos isPagado()
+                    boolean pagado = p.isPagado();
 
                     boolean esListo = "LISTO".equalsIgnoreCase(estado);
-
                     boolean esEntregadoMoroso = "ENTREGADO".equalsIgnoreCase(estado) && !pagado;
 
                     return esListo || esEntregadoMoroso;
                 })
-                .sorted(Comparator.comparing(Pedido::getFechaHora)) // Ordenar por hora
+                .sorted(Comparator.comparing(Pedido::getFechaHora))
                 .collect(Collectors.toList());
 
         gridEntregas.setItems(visibles);
@@ -391,31 +404,20 @@ public class MostradorView extends VerticalLayout {
                 estadoRecibido = estadoPedidoRepository.findByNombre("LISTO").orElse(null);
             pedido.setEstado(estadoRecibido);
 
-            // --- CORRECCIÓN CLAVE AQUÍ ---
-            // 1. Creamos un Set nuevo para las líneas
             Set<LineaPedido> lineasParaGuardar = new HashSet<>();
 
-            // 2. Recorremos la cesta y creamos COPIAS de las líneas vinculándolas al pedido
             for (LineaPedido itemCesta : cestaCompra) {
                 LineaPedido lineaBD = new LineaPedido();
                 lineaBD.setProducto(itemCesta.getProducto());
                 lineaBD.setCantidad(itemCesta.getCantidad());
                 lineaBD.setPrecioUnitario(itemCesta.getPrecioUnitario());
-
-                // VINCULACIÓN BIDIRECCIONAL IMPORTANTE
                 lineaBD.setPedido(pedido);
-
                 lineasParaGuardar.add(lineaBD);
             }
 
-            // 3. Asignamos las líneas preparadas al pedido
             pedido.setLineas(lineasParaGuardar);
-
-            // 4. Guardamos SOLO el pedido. Hibernate guardará las líneas automáticamente
-            // por el CascadeType.ALL
             pedidoRepository.save(pedido);
 
-            // Limpieza
             cestaCompra.clear();
             campoMesa.clear();
             actualizarTicket();

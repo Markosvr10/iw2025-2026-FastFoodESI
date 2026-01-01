@@ -32,19 +32,16 @@ import java.util.stream.Collectors;
 @Route(value = "camarero", layout = MainLayout.class)
 @PageTitle("Comandero | FastFood ESI")
 @RolesAllowed({ "CAMARERO", "PROPIETARIO" })
-public class CamareroView extends HorizontalLayout {
+public class CamareroView extends VerticalLayout { // CAMBIO: Ahora es VerticalLayout
 
     private final ProductoRepository productoRepository;
     private final PedidoRepository pedidoRepository;
     private final LineaPedidoRepository lineaPedidoRepository;
     private final ClienteRepository clienteRepository;
     private final EstadoPedidoRepository estadoPedidoRepository;
-
-    // CAMBIO: Usamos TipoRepository
     private final TipoRepository tipoRepository;
 
     private Negocio negocioActivo;
-
     private List<LineaPedido> cestaCompra = new ArrayList<>();
 
     private Grid<Producto> gridProductos;
@@ -57,17 +54,17 @@ public class CamareroView extends HorizontalLayout {
             LineaPedidoRepository lineaPedidoRepository,
             ClienteRepository clienteRepository,
             EstadoPedidoRepository estadoPedidoRepository,
-            TipoRepository tipoRepository) { // Inyectamos TipoRepository
+            TipoRepository tipoRepository) {
 
         this.productoRepository = productoRepository;
         this.pedidoRepository = pedidoRepository;
         this.lineaPedidoRepository = lineaPedidoRepository;
         this.clienteRepository = clienteRepository;
         this.estadoPedidoRepository = estadoPedidoRepository;
-        this.tipoRepository = tipoRepository; // Guardamos
+        this.tipoRepository = tipoRepository;
 
         setSizeFull();
-        setSpacing(true);
+        setSpacing(false); // Quitamos spacing global para pegar el header
         setPadding(true);
 
         negocioActivo = (Negocio) VaadinSession.getCurrent().getAttribute("NEGOCIO_ACTIVO");
@@ -76,7 +73,30 @@ public class CamareroView extends HorizontalLayout {
             return;
         }
 
-        add(crearZonaProductos(), crearZonaTicket());
+        // --- NUEVO: HEADER CON BOTÓN VOLVER ---
+        HorizontalLayout header = new HorizontalLayout();
+        header.setWidthFull();
+        header.setAlignItems(Alignment.CENTER);
+        header.setJustifyContentMode(JustifyContentMode.BETWEEN);
+
+        H2 titulo = new H2("Comandero - Mesa / Barra");
+
+        Button btnVolver = new Button("Cambiar Usuario", VaadinIcon.USER.create());
+        btnVolver.addClickListener(e -> UI.getCurrent().navigate(SeleccionEmpleadoView.class));
+
+        header.add(titulo, btnVolver);
+        add(header);
+        // -------------------------------------
+
+        // Creamos un contenedor Horizontal para mantener el diseño original (Izq:
+        // Productos, Der: Ticket)
+        HorizontalLayout cuerpoPrincipal = new HorizontalLayout();
+        cuerpoPrincipal.setSizeFull();
+        cuerpoPrincipal.setSpacing(true);
+
+        cuerpoPrincipal.add(crearZonaProductos(), crearZonaTicket());
+
+        add(cuerpoPrincipal); // Añadimos el cuerpo debajo del header
     }
 
     private Component crearZonaProductos() {
@@ -84,10 +104,11 @@ public class CamareroView extends HorizontalLayout {
         layout.setWidth("60%");
         layout.setHeightFull();
 
-        H2 titulo = new H2("Carta / Menú");
+        // Quitamos el H2 de aquí porque ya está en el header general, o lo cambiamos
+        // por H3
+        H4 subtitulo = new H4("Selección de Productos");
 
         Tabs tabs = new Tabs();
-
         List<Tipo> tipos = tipoRepository.findAll();
         Map<Tab, Tipo> tabMap = new HashMap<>();
 
@@ -120,9 +141,12 @@ public class CamareroView extends HorizontalLayout {
             }
         });
 
-        layout.add(titulo, tabs, gridProductos);
+        layout.add(subtitulo, tabs, gridProductos);
         return layout;
     }
+
+    // ... (El resto de métodos: crearZonaTicket, cargarProductos, agregarAlTicket,
+    // actualizarTicket, finalizarPedido SE MANTIENEN IGUAL) ...
 
     private Component crearZonaTicket() {
         VerticalLayout layout = new VerticalLayout();
@@ -241,7 +265,6 @@ public class CamareroView extends HorizontalLayout {
                 estadoRecibido = estadoPedidoRepository.findByNombre("LISTO").orElse(null);
             pedido.setEstado(estadoRecibido);
 
-            // --- CORRECCIÓN CLAVE ---
             Set<LineaPedido> lineasParaGuardar = new HashSet<>();
 
             for (LineaPedido itemCesta : cestaCompra) {
@@ -249,16 +272,11 @@ public class CamareroView extends HorizontalLayout {
                 lineaBD.setProducto(itemCesta.getProducto());
                 lineaBD.setCantidad(itemCesta.getCantidad());
                 lineaBD.setPrecioUnitario(itemCesta.getPrecioUnitario());
-
-                // VINCULAR
                 lineaBD.setPedido(pedido);
-
                 lineasParaGuardar.add(lineaBD);
             }
 
             pedido.setLineas(lineasParaGuardar);
-
-            // GUARDAR PADRE (y cascada hijos)
             pedidoRepository.save(pedido);
 
             cestaCompra.clear();

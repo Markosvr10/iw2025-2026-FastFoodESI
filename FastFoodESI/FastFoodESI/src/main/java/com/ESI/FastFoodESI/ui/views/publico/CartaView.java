@@ -22,33 +22,39 @@ import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.component.tabs.TabsVariant;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
+import com.vaadin.flow.router.BeforeEvent;
+import com.vaadin.flow.router.HasUrlParameter;
+import com.vaadin.flow.router.OptionalParameter;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+// La ruta base es "carta". La URL final será localhost:8080/carta/NombreDelNegocio
 @Route(value = "carta", layout = MainLayout.class)
 @PageTitle("Carta | FastFood ESI")
 @AnonymousAllowed
-public class CartaView extends VerticalLayout {
+public class CartaView extends VerticalLayout implements HasUrlParameter<String> {
 
     private final MenuService menuService;
     private final CarritoService carritoService;
-    private List<Producto> todosLosProductos;
+
+    private List<Producto> productosDelNegocio;
+    private String nombreNegocioActual = "Todos";
 
     // Componentes ui
     private final FlexLayout contenedorTarjetas;
     private final TextField buscador;
     private final Tabs tabsCategorias;
+    private final H2 tituloCarta;
 
     public CartaView(MenuService menuService, CarritoService carritoService) {
         this.menuService = menuService;
         this.carritoService = carritoService;
-
-        this.todosLosProductos = menuService.obtenerTodosLosProductos();
-        List<Tipo> categorias = menuService.obtenerTodosLosTipos();
+        this.productosDelNegocio = new ArrayList<>();
 
         // configuración visual base
         setSizeFull();
@@ -59,9 +65,13 @@ public class CartaView extends VerticalLayout {
 
         // --- COMPONENTES ---
 
+        // Título dinámico del negocio
+        tituloCarta = new H2("Cargando carta...");
+        tituloCarta.getStyle().set("margin-left", "20px");
+
         // Buscador
         buscador = new TextField();
-        buscador.setPlaceholder("Buscar...");
+        buscador.setPlaceholder("Buscar en esta carta...");
         buscador.setPrefixComponent(VaadinIcon.SEARCH.create());
         buscador.setClearButtonVisible(true);
         buscador.setWidthFull();
@@ -80,17 +90,10 @@ public class CartaView extends VerticalLayout {
         topBar.expand(buscador);
         topBar.setPadding(true);
 
-        // Pestañas
+        // Pestañas (Se llenarán dinámicamente en setParameter)
         tabsCategorias = new Tabs();
         tabsCategorias.addThemeVariants(TabsVariant.LUMO_CENTERED);
         tabsCategorias.setWidthFull();
-        tabsCategorias.add(new Tab("Todos"));
-
-        for (Tipo tipo : categorias) {
-            Tab tab = new Tab(tipo.getNombre());
-            tab.setId(tipo.getNombre());
-            tabsCategorias.add(tab);
-        }
         tabsCategorias.addSelectedChangeListener(e -> filtrarProductos());
 
         // Contenedor Tarjetas
@@ -99,22 +102,72 @@ public class CartaView extends VerticalLayout {
         contenedorTarjetas.setFlexWrap(FlexLayout.FlexWrap.WRAP);
         contenedorTarjetas.getStyle().set("gap", "20px");
         contenedorTarjetas.setJustifyContentMode(JustifyContentMode.CENTER);
-
-        // --- CORRECCIÓN AQUÍ ---
-        // FlexLayout no tiene setPadding(boolean), usamos CSS:
         contenedorTarjetas.getStyle().set("padding", "20px");
-        // -----------------------
-
-        // Carga inicial
-        filtrarProductos();
 
         // Scroll
         Scroller scroller = new Scroller(contenedorTarjetas);
         scroller.setSizeFull();
         scroller.setScrollDirection(Scroller.ScrollDirection.VERTICAL);
 
-        add(topBar, tabsCategorias, scroller);
+        add(tituloCarta, topBar, tabsCategorias, scroller);
         expand(scroller);
+    }
+
+    /**
+     * Este método se ejecuta automáticamente cuando la URL tiene un parámetro.
+     * Ejemplo URL: localhost:8080/carta/FastFoodESI_Cadiz
+     * parameter será: "FastFoodESI_Cadiz"
+     */
+    @Override
+    public void setParameter(BeforeEvent event, @OptionalParameter String parameter) {
+        tabsCategorias.removeAll();
+
+        if (parameter == null || parameter.isEmpty()) {
+            this.nombreNegocioActual = "Todos los Negocios";
+            this.productosDelNegocio = menuService.obtenerTodosLosProductos();
+            tituloCarta.setText("Carta de " + nombreNegocioActual);
+        } else {
+            // 1. PARA LA BÚSQUEDA: Usamos el nombre exacto (con guiones bajos si los tiene)
+            // Esto asegura que encuentre el negocio en la BD "FastFoodESI_Cádiz"
+            this.productosDelNegocio = menuService.obtenerProductosPorNegocio(parameter);
+
+            // 2. PARA EL TÍTULO: Quitamos los guiones bajos para que se vea bonito
+            // "FastFoodESI_Cádiz" se convierte en "FastFoodESI Cádiz" solo en el título
+            String nombreVisual = parameter.replace("_", " ");
+            tituloCarta.setText("Carta de " + nombreVisual);
+
+            this.nombreNegocioActual = parameter; // Guardamos el real por si acaso
+
+            if (productosDelNegocio.isEmpty()) {
+                Notification.show("No se encontraron productos en: " + nombreVisual)
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            }
+        }
+
+        // Regenerar pestañas y mostrar productos
+        generarPestañasDinamicas();
+        filtrarProductos();
+    }
+
+    private void generarPestañasDinamicas() {
+        tabsCategorias.removeAll();
+
+        // Pestaña por defecto
+        Tab tabTodos = new Tab("Todos");
+        tabsCategorias.add(tabTodos);
+
+        // Extraemos las categorías únicas de los productos que acabamos de cargar
+        List<String> categoriasDisponibles = productosDelNegocio.stream()
+                .map(p -> p.getTipo().getNombre())
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
+
+        for (String nombreCat : categoriasDisponibles) {
+            Tab tab = new Tab(nombreCat);
+            // Usamos el label del tab o un ID para filtrar después
+            tabsCategorias.add(tab);
+        }
     }
 
     private void filtrarProductos() {
@@ -124,7 +177,7 @@ public class CartaView extends VerticalLayout {
         Tab tabSeleccionado = tabsCategorias.getSelectedTab();
         String categoriaSeleccionada = (tabSeleccionado != null) ? tabSeleccionado.getLabel() : "Todos";
 
-        List<Producto> productosFiltrados = todosLosProductos.stream()
+        List<Producto> productosFiltrados = productosDelNegocio.stream()
                 .filter(p -> {
                     boolean coincideTexto = p.getNombre().toLowerCase().contains(textoBusqueda);
                     boolean coincideCategoria = true;
@@ -136,7 +189,7 @@ public class CartaView extends VerticalLayout {
                 .collect(Collectors.toList());
 
         if (productosFiltrados.isEmpty()) {
-            contenedorTarjetas.add(new H3("Vaya, no hemos encontrado nada... 😢"));
+            contenedorTarjetas.add(new H3("Vaya, no hay productos aquí... 😢"));
         } else {
             for (Producto p : productosFiltrados) {
                 contenedorTarjetas.add(crearTarjetaProducto(p));

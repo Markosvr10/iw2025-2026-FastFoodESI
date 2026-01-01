@@ -6,6 +6,9 @@ import com.ESI.FastFoodESI.model.Pedido;
 import com.ESI.FastFoodESI.repository.EstadoPedidoRepository;
 import com.ESI.FastFoodESI.service.admin.PedidoService;
 import com.ESI.FastFoodESI.ui.layouts.MainLayout;
+// --- IMPORTANTE: Importación correcta de UI ---
+import com.vaadin.flow.component.UI;
+// ---------------------------------------------
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -20,6 +23,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.spring.annotation.SpringComponent;
 import com.vaadin.flow.spring.annotation.UIScope;
+
 import jakarta.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -36,11 +40,9 @@ public class CocinaView extends VerticalLayout {
     private final PedidoService pedidoService;
     private final EstadoPedidoRepository estadoPedidoRepository;
 
-    // DOS CONTENEDORES: UNO PARA CADA COLUMNA
     private final VerticalLayout columnaRecibidos;
     private final VerticalLayout columnaEnCocina;
 
-    // Contenedores internos para las tarjetas (dentro de las columnas)
     private final FlexLayout contenedorTarjetasRecibidos;
     private final FlexLayout contenedorTarjetasCocina;
 
@@ -60,42 +62,49 @@ public class CocinaView extends VerticalLayout {
         header.setAlignItems(Alignment.CENTER);
         header.setJustifyContentMode(JustifyContentMode.BETWEEN);
 
+        // 1. Botón Volver
+        Button btnVolver = new Button("Cambiar Cocinero", VaadinIcon.USER.create());
+        btnVolver.addClickListener(click -> UI.getCurrent().navigate(SeleccionEmpleadoView.class));
+
+        // 2. Botón Refrescar
         Button refreshButton = new Button("Actualizar Tablero", VaadinIcon.REFRESH.create());
         refreshButton.addClickListener(click -> updateList());
 
-        header.add(new H2("Monitor de Cocina (KDS)"), refreshButton);
+        // --- CORRECCIÓN: AÑADIR LOS DOS BOTONES AL HEADER ---
+        // Agrupamos los botones a la derecha para que quede ordenado
+        HorizontalLayout botonesDerecha = new HorizontalLayout(btnVolver, refreshButton);
+        header.add(new H2("Monitor de Cocina (KDS)"), botonesDerecha);
+
         add(header);
 
-        // --- ZONA PRINCIPAL (DOS COLUMNAS) ---
+        // --- RESTO DEL LAYOUT (Igual que antes) ---
         HorizontalLayout mainLayout = new HorizontalLayout();
         mainLayout.setSizeFull();
         mainLayout.setSpacing(true);
 
-        // 1. Configurar Columna Izquierda (RECIBIDOS)
+        // Columna Izquierda (RECIBIDOS)
         columnaRecibidos = new VerticalLayout();
         columnaRecibidos.addClassName("columna-recibidos");
-        columnaRecibidos.getStyle().set("background-color", "#fff0f0"); // Rojo muy clarito
+        columnaRecibidos.getStyle().set("background-color", "#fff0f0");
         columnaRecibidos.setHeightFull();
         columnaRecibidos.setWidth("50%");
 
         contenedorTarjetasRecibidos = crearContenedorTarjetas();
         columnaRecibidos.add(new H3("🔔 NUEVOS / RECIBIDOS"), new Hr(), contenedorTarjetasRecibidos);
 
-        // 2. Configurar Columna Derecha (EN COCINA)
+        // Columna Derecha (EN COCINA)
         columnaEnCocina = new VerticalLayout();
         columnaEnCocina.addClassName("columna-cocina");
-        columnaEnCocina.getStyle().set("background-color", "#f0f8ff"); // Azul muy clarito
+        columnaEnCocina.getStyle().set("background-color", "#f0f8ff");
         columnaEnCocina.setHeightFull();
         columnaEnCocina.setWidth("50%");
 
         contenedorTarjetasCocina = crearContenedorTarjetas();
         columnaEnCocina.add(new H3("🔥 EN PREPARACIÓN"), new Hr(), contenedorTarjetasCocina);
 
-        // Añadir columnas al layout principal
         mainLayout.add(columnaRecibidos, columnaEnCocina);
         add(mainLayout);
 
-        // Cargar datos
         updateList();
     }
 
@@ -105,20 +114,14 @@ public class CocinaView extends VerticalLayout {
         layout.setWidthFull();
         layout.getStyle().set("overflow-y", "auto");
         layout.getStyle().set("gap", "15px");
-
-        // CORRECCIÓN: FlexLayout no tiene setPadding(boolean), usamos CSS:
         layout.getStyle().set("padding", "10px");
-
         return layout;
     }
 
     public void updateList() {
-        // Limpiamos ambas columnas
         contenedorTarjetasRecibidos.removeAll();
         contenedorTarjetasCocina.removeAll();
 
-        // Buscamos TODOS los pedidos pendientes
-        // NOTA: Asegúrate de que tu servicio devuelve tanto RECIBIDO como EN_COCINA
         List<Pedido> pedidos = pedidoService.findPedidosCocina();
 
         if (pedidos.isEmpty()) {
@@ -130,26 +133,24 @@ public class CocinaView extends VerticalLayout {
             String estado = p.getEstado().getNombre();
 
             if ("RECIBIDO".equalsIgnoreCase(estado)) {
-                contenedorTarjetasRecibidos.add(crearTarjetaComanda(p, true)); // true = botón rojo
+                contenedorTarjetasRecibidos.add(crearTarjetaComanda(p, true));
             } else if ("EN_COCINA".equalsIgnoreCase(estado)) {
-                contenedorTarjetasCocina.add(crearTarjetaComanda(p, false)); // false = botón azul
+                contenedorTarjetasCocina.add(crearTarjetaComanda(p, false));
             }
         }
     }
 
     private Component crearTarjetaComanda(Pedido p, boolean esNuevo) {
         VerticalLayout card = new VerticalLayout();
-        card.setWidthFull(); // Que ocupe el ancho de su columna
+        card.setWidthFull();
         card.setPadding(true);
         card.setSpacing(false);
 
-        // Estilos visuales
         card.getStyle().set("border", esNuevo ? "2px solid #ffcccc" : "2px solid #cce5ff");
         card.getStyle().set("border-radius", "8px");
         card.getStyle().set("background-color", "white");
         card.getStyle().set("box-shadow", "0 2px 4px rgba(0,0,0,0.1)");
 
-        // --- Cabecera ---
         HorizontalLayout header = new HorizontalLayout();
         header.setWidthFull();
         header.setJustifyContentMode(JustifyContentMode.BETWEEN);
@@ -163,7 +164,6 @@ public class CocinaView extends VerticalLayout {
 
         header.add(idSpan, horaSpan);
 
-        // --- Mesa ---
         String infoMesa = p.getTipoEntrega();
         if (infoMesa == null || infoMesa.isEmpty())
             infoMesa = "Mostrador";
@@ -171,7 +171,6 @@ public class CocinaView extends VerticalLayout {
         mesaSpan.getStyle().set("font-weight", "bold").set("color", esNuevo ? "#d32f2f" : "#1976d2");
         mesaSpan.getStyle().set("font-size", "1.1em");
 
-        // --- Lista de Productos ---
         VerticalLayout listaProductos = new VerticalLayout();
         listaProductos.setPadding(false);
         listaProductos.setSpacing(false);
@@ -185,14 +184,13 @@ public class CocinaView extends VerticalLayout {
             }
         }
 
-        // --- Botón de Acción ---
         Button btnAccion;
         if (esNuevo) {
             btnAccion = new Button("MARCHAR A COCINA", VaadinIcon.FIRE.create());
-            btnAccion.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_ERROR); // Rojo
+            btnAccion.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_ERROR);
         } else {
             btnAccion = new Button("TERMINAR / LISTO", VaadinIcon.CHECK.create());
-            btnAccion.addThemeVariants(ButtonVariant.LUMO_PRIMARY); // Azul
+            btnAccion.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         }
         btnAccion.setWidthFull();
         btnAccion.addClickListener(e -> avanzarPedido(p));

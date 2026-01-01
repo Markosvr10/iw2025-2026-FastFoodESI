@@ -11,6 +11,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -23,7 +24,7 @@ import jakarta.annotation.security.RolesAllowed;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Optional; // Import necesario
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Route(value = "repartidor", layout = MainLayout.class)
@@ -40,9 +41,24 @@ public class RepartidorView extends VerticalLayout {
         this.estadoPedidoRepository = estadoPedidoRepository;
 
         setSizeFull();
-        setAlignItems(Alignment.CENTER);
+        setPadding(true);
+        setSpacing(true);
 
-        add(new H2("Pedidos a Domicilio Pendientes"));
+        // --- HEADER CON BOTÓN VOLVER ---
+        HorizontalLayout header = new HorizontalLayout();
+        header.setWidthFull();
+        header.setAlignItems(Alignment.CENTER);
+        header.setJustifyContentMode(JustifyContentMode.BETWEEN);
+
+        H2 titulo = new H2("Pedidos a Domicilio Pendientes");
+
+        // Botón para cambiar de usuario
+        Button btnVolver = new Button("Cambiar Repartidor", VaadinIcon.USER.create());
+        btnVolver.addClickListener(e -> UI.getCurrent().navigate(SeleccionEmpleadoView.class));
+
+        header.add(titulo, btnVolver);
+        add(header);
+        // -------------------------------
 
         configurarGrid();
         cargarPedidos();
@@ -60,7 +76,7 @@ public class RepartidorView extends VerticalLayout {
             return p.getFechaHora().format(DateTimeFormatter.ofPattern("HH:mm"));
         }).setHeader("Hora").setWidth("100px").setFlexGrow(0);
 
-        // 2. Protección en CLIENTE (Si el cliente es null, explota sin esto)
+        // 2. Protección en CLIENTE
         gridPedidos.addColumn(p -> {
             if (p.getCliente() == null)
                 return "Cliente Anónimo";
@@ -71,14 +87,14 @@ public class RepartidorView extends VerticalLayout {
         gridPedidos.addColumn(p -> "Calle Ejemplo, 123 (Simulado)")
                 .setHeader("Dirección Entrega").setAutoWidth(true);
 
-        // 4. Protección en ESTADO (Si el estado es null, explota)
+        // 4. Protección en ESTADO
         gridPedidos.addColumn(p -> {
             if (p.getEstado() == null)
                 return "Sin Estado";
             return p.getEstado().getNombre();
         }).setHeader("Estado Actual");
 
-        // Columna de Botones (Igual que antes)
+        // Columna de Botones
         gridPedidos.addColumn(new ComponentRenderer<>(pedido -> {
             HorizontalLayout buttons = new HorizontalLayout();
 
@@ -101,7 +117,6 @@ public class RepartidorView extends VerticalLayout {
         if (negocioActivo != null) {
             List<Pedido> pedidos = pedidoRepository.findByNegocio(negocioActivo);
 
-            // CORRECCIÓN 2: Usar getEstado() en el filtro
             List<Pedido> filtrados = pedidos.stream()
                     .filter(p -> "DOMICILIO".equalsIgnoreCase(p.getTipoEntrega()))
                     .filter(p -> p.getEstado() != null && !p.getEstado().getNombre().equals("ENTREGADO"))
@@ -119,22 +134,9 @@ public class RepartidorView extends VerticalLayout {
     }
 
     private void actualizarEstado(Pedido pedido, String nuevoEstadoNombre) {
-        // CORRECCIÓN 3: Gestión del Optional con .orElse(null)
-        // Esto soluciona el error "Optional cannot be converted to EstadoPedido"
-        // Si tu repositorio devuelve EstadoPedido directamente, quita el .orElse(null),
-        // pero el error indicaba que devolvía Optional.
-
-        // OPCIÓN A: Si tu repositorio devuelve Optional<EstadoPedido>
         EstadoPedido nuevoEstado = estadoPedidoRepository.findByNombre(nuevoEstadoNombre).orElse(null);
 
-        // NOTA: Si esto sigue dando error, significa que tu Repositorio devuelve
-        // Optional
-        // Si es así, cámbialo por:
-        // EstadoPedido nuevoEstado =
-        // estadoPedidoRepository.findByNombre(nuevoEstadoNombre).orElse(null);
-
         if (nuevoEstado != null) {
-            // CORRECCIÓN 4: setEstado() en vez de setEstadoPedido()
             pedido.setEstado(nuevoEstado);
             pedidoRepository.save(pedido);
 

@@ -113,11 +113,6 @@ public class CartaView extends VerticalLayout implements HasUrlParameter<String>
         expand(scroller);
     }
 
-    /**
-     * Este método se ejecuta automáticamente cuando la URL tiene un parámetro.
-     * Ejemplo URL: localhost:8080/carta/FastFoodESI_Cadiz
-     * parameter será: "FastFoodESI_Cadiz"
-     */
     @Override
     public void setParameter(BeforeEvent event, @OptionalParameter String parameter) {
         tabsCategorias.removeAll();
@@ -127,12 +122,7 @@ public class CartaView extends VerticalLayout implements HasUrlParameter<String>
             this.productosDelNegocio = menuService.obtenerTodosLosProductos();
             tituloCarta.setText("Carta de " + nombreNegocioActual);
         } else {
-            // 1. PARA LA BÚSQUEDA: Usamos el nombre exacto (con guiones bajos si los tiene)
-            // Esto asegura que encuentre el negocio en la BD "FastFoodESI_Cádiz"
             this.productosDelNegocio = menuService.obtenerProductosPorNegocio(parameter);
-
-            // 2. PARA EL TÍTULO: Quitamos los guiones bajos para que se vea bonito
-            // "FastFoodESI_Cádiz" se convierte en "FastFoodESI Cádiz" solo en el título
             String nombreVisual = parameter.replace("_", " ");
             tituloCarta.setText("Carta de " + nombreVisual);
 

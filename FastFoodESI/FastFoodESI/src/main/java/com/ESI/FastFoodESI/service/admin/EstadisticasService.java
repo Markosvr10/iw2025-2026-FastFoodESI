@@ -1,12 +1,15 @@
 package com.ESI.FastFoodESI.service.admin;
 
 import com.ESI.FastFoodESI.model.Producto;
+import com.ESI.FastFoodESI.model.Propietario;
 import com.ESI.FastFoodESI.dto.EstadisticaDTO;
 import com.ESI.FastFoodESI.dto.RankingItemDTO;
 import com.ESI.FastFoodESI.repository.EmpleadoRepository;
 import com.ESI.FastFoodESI.repository.NegocioRepository;
 import com.ESI.FastFoodESI.repository.PedidoRepository; 
 import com.ESI.FastFoodESI.repository.ProductoRepository;
+import com.ESI.FastFoodESI.repository.PropietarioRepository;
+
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
@@ -23,15 +26,22 @@ public class EstadisticasService {
     private final EmpleadoRepository empleadoRepository;
     private final ProductoRepository productoRepository;
     private final PedidoRepository pedidoRepository; 
+    private final PropietarioRepository propietarioRepository;
     
     public EstadisticasService(NegocioRepository negocioRepository,
                                EmpleadoRepository empleadoRepository,
                                ProductoRepository productoRepository,
-                               PedidoRepository pedidoRepository) {
+                               PedidoRepository pedidoRepository,
+                               PropietarioRepository propietarioRepository) {
         this.negocioRepository = negocioRepository;
         this.empleadoRepository = empleadoRepository;
         this.productoRepository = productoRepository;
         this.pedidoRepository = pedidoRepository;
+        this.propietarioRepository = propietarioRepository;
+    }
+    public Propietario getPropietarioByCorreo(String correo) {
+        return propietarioRepository.findByCorreo(correo)
+                .orElseThrow(() -> new RuntimeException("Propietario no encontrado: " + correo));
     }
 
     public EstadisticaDTO obtenerEstadisticasPedidos() {
@@ -62,25 +72,22 @@ public class EstadisticasService {
         }
     }
 
-    public List<RankingItemDTO> getRankingEmpleados(String periodo) {
-        return empleadoRepository.findTopEmpleadosVentas(
-            calcularFechaInicio(periodo), 
-            PageRequest.of(0, 5) 
-        );
+    // Top Empleados
+    public List<RankingItemDTO> getTopEmpleados(Propietario propietario, String periodo) {
+        LocalDateTime fechaInicio = calcularFechaInicio(periodo);
+        return empleadoRepository.findTopEmpleadosVentas(fechaInicio, propietario, PageRequest.of(0, 5));
     }
 
-    public List<RankingItemDTO> getRankingNegocios(String periodo) {
-        return negocioRepository.findTopNegociosVentas(
-            calcularFechaInicio(periodo), 
-            PageRequest.of(0, 5)
-        );
+    // Top Negocios
+    public List<RankingItemDTO> getTopNegocios(Propietario propietario, String periodo) {
+        LocalDateTime fechaInicio = calcularFechaInicio(periodo);
+        return negocioRepository.findTopNegociosVentas(fechaInicio, propietario, PageRequest.of(0, 5));
     }
 
-    public List<RankingItemDTO> getRankingProductos(String periodo) {
-        return productoRepository.findTopProductosVentas(
-            calcularFechaInicio(periodo), 
-            PageRequest.of(0, 5)
-        );
+    // Top Productos
+    public List<RankingItemDTO> getTopProductos(Propietario propietario, String periodo) {
+        LocalDateTime fechaInicio = calcularFechaInicio(periodo);
+        return productoRepository.findTopProductosVentas(fechaInicio, propietario, PageRequest.of(0, 5));
     }
 
 

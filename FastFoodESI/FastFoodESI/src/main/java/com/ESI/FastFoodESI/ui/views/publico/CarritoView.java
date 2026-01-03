@@ -4,7 +4,7 @@ import com.ESI.FastFoodESI.model.Cliente;
 import com.ESI.FastFoodESI.dto.LineaCarrito;
 import com.ESI.FastFoodESI.service.cliente.CarritoService;
 import com.ESI.FastFoodESI.service.pedido.PedidoClienteService;
-import com.ESI.FastFoodESI.ui.layout.MainLayout;
+import com.ESI.FastFoodESI.ui.layouts.MainLayout;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;

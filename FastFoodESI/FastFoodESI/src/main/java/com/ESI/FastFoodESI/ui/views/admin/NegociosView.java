@@ -122,9 +122,7 @@ public class NegociosView extends VerticalLayout {
     public void updateList() {
         Propietario actual = getCurrentPropietario();
         if (actual != null) {
-             grid.setItems(negocioService.findAll().stream()
-                 .filter(n -> n.getPropietario() != null && n.getPropietario().getId().equals(actual.getId()))
-                 .toList());
+            grid.setItems(negocioService.findAllByPropietario(actual));
         } else {
             grid.setItems(); 
         }

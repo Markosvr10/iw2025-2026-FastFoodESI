@@ -23,9 +23,13 @@ public interface EmpleadoRepository extends JpaRepository<Empleado, UUID> {
     @Query("SELECT new com.ESI.FastFoodESI.dto.RankingItemDTO(e.nombre || ' ' || e.apellido, SUM(p.total)) " +
            "FROM Pedido p JOIN p.empleado e " +
            "WHERE p.fechaHora >= :desde " +
+           "AND e.negocio.propietario = :propietario " + 
            "GROUP BY e " +
            "ORDER BY SUM(p.total) DESC")
-    List<RankingItemDTO> findTopEmpleadosVentas(@Param("desde") LocalDateTime desde, Pageable pageable);
+    List<RankingItemDTO> findTopEmpleadosVentas(
+            @Param("desde") LocalDateTime desde, 
+            @Param("propietario") Propietario propietario, 
+            Pageable pageable);
 
     Optional<Empleado> findByDni(String dni);
 }

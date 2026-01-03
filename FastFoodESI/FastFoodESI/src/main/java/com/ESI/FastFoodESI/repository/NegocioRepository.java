@@ -18,14 +18,19 @@ import java.util.UUID;
 @Repository
 public interface NegocioRepository extends JpaRepository<Negocio, UUID> {
 
-    List<Negocio> findByPropietario(Propietario propietario);
+    @Query("SELECT DISTINCT n FROM Negocio n LEFT JOIN FETCH n.empleados WHERE n.propietario = :propietario")
+    List<Negocio> findByPropietario(@Param("propietario") Propietario propietario);
 
     @Query("SELECT new com.ESI.FastFoodESI.dto.RankingItemDTO(n.nombre, SUM(p.total)) " +
-           "FROM Pedido p JOIN p.empleado e JOIN e.negocio n " +
+           "FROM Pedido p JOIN p.negocio n " +
            "WHERE p.fechaHora >= :desde " +
+           "AND n.propietario = :propietario " +
            "GROUP BY n " +
            "ORDER BY SUM(p.total) DESC")
-    List<RankingItemDTO> findTopNegociosVentas(@Param("desde") LocalDateTime desde, Pageable pageable);
+    List<RankingItemDTO> findTopNegociosVentas (
+            @Param("desde") LocalDateTime desde, 
+            @Param("propietario") Propietario propietario, 
+            Pageable pageable);
 
     Optional<Negocio> findByNombre(String nombre);
 }

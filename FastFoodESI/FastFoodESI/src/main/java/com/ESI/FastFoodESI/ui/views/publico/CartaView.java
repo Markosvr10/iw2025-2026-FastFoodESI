@@ -15,54 +15,63 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.component.tabs.TabsVariant;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
+import com.vaadin.flow.router.BeforeEvent;
+import com.vaadin.flow.router.HasUrlParameter;
+import com.vaadin.flow.router.OptionalParameter;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Route(value = "", layout = MainLayout.class)
+// La ruta base es "carta". La URL final será localhost:8080/carta/NombreDelNegocio
+@Route(value = "carta", layout = MainLayout.class)
 @PageTitle("Carta | FastFood ESI")
 @AnonymousAllowed
-public class CartaView extends VerticalLayout {
+public class CartaView extends VerticalLayout implements HasUrlParameter<String> {
 
     private final MenuService menuService;
     private final CarritoService carritoService;
-    private List<Producto> todosLosProductos;
 
-    //Componentes ui
+    private List<Producto> productosDelNegocio;
+    private String nombreNegocioActual = "Todos";
+
+    // Componentes ui
     private final FlexLayout contenedorTarjetas;
     private final TextField buscador;
     private final Tabs tabsCategorias;
-
-    //******************************************************************************************************************
+    private final H2 tituloCarta;
 
     public CartaView(MenuService menuService, CarritoService carritoService) {
         this.menuService = menuService;
         this.carritoService = carritoService;
-
-        this.todosLosProductos = menuService.obtenerTodosLosProductos();
-        List<Tipo> categorias = menuService.obtenerTodosLosTipos();
+        this.productosDelNegocio = new ArrayList<>();
 
         // configuración visual base
         setSizeFull();
-        setPadding(true);
+        setPadding(false);
         setSpacing(true);
         setMaxWidth("1200px");
         getStyle().set("margin", "0 auto");
 
         // --- COMPONENTES ---
 
+        // Título dinámico del negocio
+        tituloCarta = new H2("Cargando carta...");
+        tituloCarta.getStyle().set("margin-left", "20px");
+
         // Buscador
         buscador = new TextField();
-        buscador.setPlaceholder("Buscar...");
+        buscador.setPlaceholder("Buscar en esta carta...");
         buscador.setPrefixComponent(VaadinIcon.SEARCH.create());
         buscador.setClearButtonVisible(true);
         buscador.setWidthFull();
@@ -79,18 +88,12 @@ public class CartaView extends VerticalLayout {
         topBar.setWidthFull();
         topBar.setAlignItems(Alignment.CENTER);
         topBar.expand(buscador);
+        topBar.setPadding(true);
 
-        // Pestañas
+        // Pestañas (Se llenarán dinámicamente en setParameter)
         tabsCategorias = new Tabs();
         tabsCategorias.addThemeVariants(TabsVariant.LUMO_CENTERED);
         tabsCategorias.setWidthFull();
-        tabsCategorias.add(new Tab("Todos"));
-
-        for (Tipo tipo : categorias) {
-            Tab tab = new Tab(tipo.getNombre());
-            tab.setId(tipo.getNombre());
-            tabsCategorias.add(tab);
-        }
         tabsCategorias.addSelectedChangeListener(e -> filtrarProductos());
 
         // Contenedor Tarjetas
@@ -99,14 +102,63 @@ public class CartaView extends VerticalLayout {
         contenedorTarjetas.setFlexWrap(FlexLayout.FlexWrap.WRAP);
         contenedorTarjetas.getStyle().set("gap", "20px");
         contenedorTarjetas.setJustifyContentMode(JustifyContentMode.CENTER);
+        contenedorTarjetas.getStyle().set("padding", "20px");
 
-        // Carga inicial
-        filtrarProductos();
+        // Scroll
+        Scroller scroller = new Scroller(contenedorTarjetas);
+        scroller.setSizeFull();
+        scroller.setScrollDirection(Scroller.ScrollDirection.VERTICAL);
 
-        add(topBar, tabsCategorias, contenedorTarjetas);
+        add(tituloCarta, topBar, tabsCategorias, scroller);
+        expand(scroller);
     }
 
-    //------------------------------------------------------------------------------------------------------------------
+    @Override
+    public void setParameter(BeforeEvent event, @OptionalParameter String parameter) {
+        tabsCategorias.removeAll();
+
+        if (parameter == null || parameter.isEmpty()) {
+            this.nombreNegocioActual = "Todos los Negocios";
+            this.productosDelNegocio = menuService.obtenerTodosLosProductos();
+            tituloCarta.setText("Carta de " + nombreNegocioActual);
+        } else {
+            this.productosDelNegocio = menuService.obtenerProductosPorNegocio(parameter);
+            String nombreVisual = parameter.replace("_", " ");
+            tituloCarta.setText("Carta de " + nombreVisual);
+
+            this.nombreNegocioActual = parameter; // Guardamos el real por si acaso
+
+            if (productosDelNegocio.isEmpty()) {
+                Notification.show("No se encontraron productos en: " + nombreVisual)
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            }
+        }
+
+        // Regenerar pestañas y mostrar productos
+        generarPestañasDinamicas();
+        filtrarProductos();
+    }
+
+    private void generarPestañasDinamicas() {
+        tabsCategorias.removeAll();
+
+        // Pestaña por defecto
+        Tab tabTodos = new Tab("Todos");
+        tabsCategorias.add(tabTodos);
+
+        // Extraemos las categorías únicas de los productos que acabamos de cargar
+        List<String> categoriasDisponibles = productosDelNegocio.stream()
+                .map(p -> p.getTipo().getNombre())
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
+
+        for (String nombreCat : categoriasDisponibles) {
+            Tab tab = new Tab(nombreCat);
+            // Usamos el label del tab o un ID para filtrar después
+            tabsCategorias.add(tab);
+        }
+    }
 
     private void filtrarProductos() {
         contenedorTarjetas.removeAll();
@@ -115,7 +167,7 @@ public class CartaView extends VerticalLayout {
         Tab tabSeleccionado = tabsCategorias.getSelectedTab();
         String categoriaSeleccionada = (tabSeleccionado != null) ? tabSeleccionado.getLabel() : "Todos";
 
-        List<Producto> productosFiltrados = todosLosProductos.stream()
+        List<Producto> productosFiltrados = productosDelNegocio.stream()
                 .filter(p -> {
                     boolean coincideTexto = p.getNombre().toLowerCase().contains(textoBusqueda);
                     boolean coincideCategoria = true;
@@ -127,15 +179,13 @@ public class CartaView extends VerticalLayout {
                 .collect(Collectors.toList());
 
         if (productosFiltrados.isEmpty()) {
-            contenedorTarjetas.add(new H3("Vaya, no hemos encontrado nada... 😢"));
+            contenedorTarjetas.add(new H3("Vaya, no hay productos aquí... 😢"));
         } else {
             for (Producto p : productosFiltrados) {
                 contenedorTarjetas.add(crearTarjetaProducto(p));
             }
         }
     }
-
-    //------------------------------------------------------------------------------------------------------------------
 
     private Component crearTarjetaProducto(Producto p) {
         Div imagenDiv = new Div();
@@ -147,7 +197,7 @@ public class CartaView extends VerticalLayout {
         imagenDiv.getStyle().set("justify-content", "center");
         imagenDiv.getStyle().set("border-radius", "12px");
 
-        if (p.getImagenUrl() != null && p.getImagenUrl().startsWith("http")) {
+        if (p.getImagenUrl() != null && !p.getImagenUrl().isEmpty()) {
             Image img = new Image(p.getImagenUrl(), p.getNombre());
             img.setWidthFull();
             img.setHeight("100%");
@@ -177,8 +227,6 @@ public class CartaView extends VerticalLayout {
         descripcion.getStyle().set("overflow", "hidden");
         descripcion.setWidth("100%");
 
-        // --- AQUÍ ESTABA EL ERROR ---
-        // Fíjate que AHORA creamos el botón antes de usarlo
         Button btnAdd = new Button("Añadir", VaadinIcon.PLUS.create());
         btnAdd.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         btnAdd.setWidthFull();
@@ -187,7 +235,6 @@ public class CartaView extends VerticalLayout {
             Notification.show(p.getNombre() + " añadido al carrito")
                     .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
         });
-        // ----------------------------
 
         VerticalLayout card = new VerticalLayout(imagenDiv, nombre, descripcion, precio, btnAdd);
         card.setPadding(true);

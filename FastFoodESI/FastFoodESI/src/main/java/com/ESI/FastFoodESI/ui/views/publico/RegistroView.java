@@ -9,15 +9,18 @@ import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.ESI.FastFoodESI.ui.layouts.MainLayout;
+import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 
-@Route("registro")
+@Route(value = "registro", layout = MainLayout.class)
 @PageTitle("Registro | FastFood ESI")
 @AnonymousAllowed // q sea publica
 public class RegistroView extends VerticalLayout {
@@ -32,31 +35,38 @@ public class RegistroView extends VerticalLayout {
 
         setSizeFull();
         setAlignItems(Alignment.CENTER);
-        setJustifyContentMode(JustifyContentMode.CENTER);
+        setJustifyContentMode(JustifyContentMode.START);
+
+        setPadding(false);
+        setMargin(false);
+        setSpacing(false);
 
         getStyle().set("background-color", "#f5f5f5");
 
-        // 1. Crear la tarjeta (contenedor blanco)
+        // Crear la tarjeta
         VerticalLayout card = new VerticalLayout();
         card.setWidth("100%");
         card.setMaxWidth("500px");
-        card.setPadding(true);
+        card.setPadding(false);
+        card.getStyle().set("padding", "20px 20px 5px 20px");
         card.setSpacing(true);
 
-        // Estilos CSS de la tarjeta
+        //CSS
         card.getStyle().set("background-color", "white");
         card.getStyle().set("border-radius", "12px");
         card.getStyle().set("box-shadow", "0 4px 12px rgba(0,0,0,0.1)");
 
-        // 2. Título dentro de la tarjeta
         H2 titulo = new H2("Crea tu cuenta");
         titulo.getStyle().set("text-align", "center");
         titulo.setWidthFull();
 
-        // 3. Añadir todo A LA TARJETA
-        card.add(titulo, createForm());
+        //volver al login
+        RouterLink loginLink = new RouterLink("¿Ya tienes cuenta? Inicia sesión aquí", LoginView.class);
+        loginLink.getStyle().set("font-size", "0.9em");
+        loginLink.getStyle().set("margin-top", "10px");
 
-        // 4. Añadir SOLO LA TARJETA a la vista principal
+        card.add(titulo, createForm(), loginLink);
+
         add(card);
     }
 
@@ -102,8 +112,7 @@ public class RegistroView extends VerticalLayout {
             if (binder.writeBeanIfValid(nuevoCliente)) {
                 try {
                     clienteService.registrarCliente(nuevoCliente);
-
-                    Notification.show("¡Cuenta creada con éxito! Ahora inicia sesión.")
+                    Notification.show("Registro exitoso. 📧 Revisa tu email para activar la cuenta.")
                             .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 
                     // redirigir al login

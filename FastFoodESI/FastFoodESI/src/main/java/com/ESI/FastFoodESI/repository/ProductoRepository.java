@@ -10,8 +10,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.data.domain.Pageable;
-import com.ESI.FastFoodESI.dto.RankingItemDTO;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,11 +18,8 @@ import java.util.UUID;
 
 @Repository
 public interface ProductoRepository extends JpaRepository<Producto, UUID> {
-    
+
     List<Producto> findByStockLessThan(Integer stock);
-    
-    @Query("SELECT p FROM Carta c JOIN c.productos p WHERE c.negocio = :negocio")
-    List<Producto> findByNegocio(@Param("negocio") Negocio negocio);
 
     @Query("SELECT new com.ESI.FastFoodESI.dto.RankingItemDTO(pr.nombre, CAST(SUM(lp.cantidad) AS bigdecimal)) " +
            "FROM LineaPedido lp JOIN lp.producto pr " +
@@ -38,4 +33,8 @@ public interface ProductoRepository extends JpaRepository<Producto, UUID> {
             Pageable pageable);
 
     List<Producto> findByNombreContainingIgnoreCase(String nombre);
+
+    List<Producto> findByNegocioNombre(String nombreNegocio);
+
+    List<Producto> findByNegocio(Negocio negocio);
 }

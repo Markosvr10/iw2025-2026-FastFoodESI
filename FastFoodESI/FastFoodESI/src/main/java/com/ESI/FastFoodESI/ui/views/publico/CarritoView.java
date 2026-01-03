@@ -2,6 +2,8 @@ package com.ESI.FastFoodESI.ui.views.publico;
 
 import com.ESI.FastFoodESI.model.Cliente;
 import com.ESI.FastFoodESI.dto.LineaCarrito;
+import com.ESI.FastFoodESI.repository.ClienteRepository;
+import com.ESI.FastFoodESI.security.SecurityService;
 import com.ESI.FastFoodESI.service.cliente.CarritoService;
 import com.ESI.FastFoodESI.service.pedido.PedidoClienteService;
 import com.ESI.FastFoodESI.ui.layouts.MainLayout;
@@ -28,6 +30,9 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.Optional;
 
 @Route(value = "carrito", layout = MainLayout.class)
 @PageTitle("Mi Pedido | FastFood ESI")
@@ -36,27 +41,33 @@ public class CarritoView extends VerticalLayout {
 
     private final CarritoService carritoService;
     private final PedidoClienteService pedidoService;
+    private final ClienteRepository clienteRepository;
+    private final SecurityService securityService;
 
     private final Grid<LineaCarrito> grid;
     private final H3 totalLabel;
 
-    public CarritoView(CarritoService carritoService, PedidoClienteService pedidoService) {
+    public CarritoView(CarritoService carritoService, PedidoClienteService pedidoService,
+            ClienteRepository clienteRepository, SecurityService securityService) {
         this.carritoService = carritoService;
         this.pedidoService = pedidoService;
+        this.clienteRepository = clienteRepository;
+        this.securityService = securityService;
 
         setSizeFull();
         setPadding(true);
 
         H2 titulo = new H2("🛒 Tu Pedido");
 
-        //lista con lo q ha pedidio ------------------------------------------------------------------------------------
+        // lista con lo q ha pedidio
+        // ------------------------------------------------------------------------------------
         grid = new Grid<>(LineaCarrito.class, false);
 
-        //col nombre prod y precio induvidual
+        // col nombre prod y precio induvidual
         grid.addColumn(linea -> linea.getProducto().getNombre()).setHeader("Producto").setAutoWidth(true);
         grid.addColumn(linea -> String.format("%.2f €", linea.getProducto().getImporte())).setHeader("Precio Unit.");
 
-        //col cantidad -> ineractiva ã> ajustar la cantidad
+        // col cantidad -> ineractiva ã> ajustar la cantidad
         grid.addComponentColumn(linea -> {
             Button btnMenos = new Button(VaadinIcon.MINUS.create());
             btnMenos.addThemeVariants(ButtonVariant.LUMO_SMALL);
@@ -79,11 +90,11 @@ public class CarritoView extends VerticalLayout {
             return new HorizontalLayout(btnMenos, cantidad, btnMas);
         }).setHeader("Cantidad");
 
-        //precio total producto
+        // precio total producto
         grid.addColumn(linea -> String.format("%.2f €", linea.getTotalLinea()))
                 .setHeader("Subtotal");
 
-        //papelera
+        // papelera
         grid.addComponentColumn(linea -> {
             Button btnTrash = new Button(VaadinIcon.TRASH.create());
             btnTrash.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_SMALL);
@@ -94,7 +105,7 @@ public class CarritoView extends VerticalLayout {
             });
             return btnTrash;
         });
-        //--------------------------------------------------------------------------------------------------------------
+        // --------------------------------------------------------------------------------------------------------------
 
         // TOTAL Y BOTONES
         totalLabel = new H3();
@@ -102,10 +113,10 @@ public class CarritoView extends VerticalLayout {
 
         Button btnSeguir = new Button("Seguir Pidiendo");
         btnSeguir.addClickListener(e -> UI.getCurrent().navigate(""));
+        btnSeguir.getStyle().set("margin-left", "auto");
 
         Button btnConfirmar = new Button("Confirmar Pedido", VaadinIcon.CHECK.create());
         btnConfirmar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        btnConfirmar.getStyle().set("margin-left", "auto");
 
         // LÓGICA BOTÓN CONFIRMAR
         btnConfirmar.addClickListener(e -> {
@@ -114,11 +125,23 @@ public class CarritoView extends VerticalLayout {
                 return;
             }
 
-            //comprobar q este logueado
+            // comprobar q este logueado
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
                 Notification.show("Debes iniciar sesión para pedir").addThemeVariants(NotificationVariant.LUMO_ERROR);
                 UI.getCurrent().navigate("login");
+                return;
+            }
+            Cliente clienteReal = null;
+            UserDetails userDetails = securityService.getAuthenticatedUser();
+            if (userDetails != null) {
+                Optional<Cliente> c = clienteRepository.findByCorreo(userDetails.getUsername());
+                if (c.isPresent()) {
+                    clienteReal = c.get();
+                }
+            }
+            if (clienteReal == null) {
+                Notification.show("Error: No se encontró tu usuario").addThemeVariants(NotificationVariant.LUMO_ERROR);
                 return;
             }
 
@@ -136,6 +159,26 @@ public class CarritoView extends VerticalLayout {
             selectTipo.setItems("Para llevar (Recoger)", "Comer aquí (Mesa)", "A Domicilio");
             selectTipo.setValue("Para llevar (Recoger)");
             selectTipo.setWidthFull();
+
+            //CAMPO DIRECCIÓN
+            TextField txtDireccion = new TextField("Dirección de Entrega");
+            txtDireccion.setWidthFull();
+            txtDireccion.setPlaceholder("Calle, Número, Piso...");
+            txtDireccion.setVisible(false); // Oculto por defecto
+
+            // Si el cliente ya tiene una dirección guardada, se la ponemos
+            if (clienteReal.getDireccion() != null && !clienteReal.getDireccion().isEmpty()) {
+                txtDireccion.setValue(clienteReal.getDireccion());
+            }
+
+            // Lógica: Si selecciona "A Domicilio", mostramos el campo. Si no, lo ocultamos.
+            selectTipo.addValueChangeListener(ev -> {
+                if ("A Domicilio".equals(ev.getValue())) {
+                    txtDireccion.setVisible(true);
+                } else {
+                    txtDireccion.setVisible(false);
+                }
+            });
 
             // MÉTODO DE PAGO
             Select<String> selectPago = new Select<>();
@@ -192,8 +235,6 @@ public class CarritoView extends VerticalLayout {
             infoEfectivo.getStyle().set("font-size", "0.9em");
             layoutEfectivo.add(infoEfectivo);
 
-
-
             // LÓGICA DE CAMBIO DE PESTAÑA
             selectPago.addValueChangeListener(ev -> {
                 String val = ev.getValue();
@@ -202,87 +243,107 @@ public class CarritoView extends VerticalLayout {
                 layoutEfectivo.setVisible("Efectivo".equals(val));
             });
 
-            dialogLayout.add(selectTipo, selectPago, layoutTarjeta, layoutPaypal, layoutEfectivo);
+            dialogLayout.add(selectTipo, txtDireccion, selectPago, layoutTarjeta, layoutPaypal, layoutEfectivo);
             dialog.add(dialogLayout);
 
             // boton cancelar
             Button cancelar = new Button("Cancelar", event -> dialog.close());
+            Cliente finalClienteReal = clienteReal;
+
 
             // boton confirmar y pagar
-            Button btnPagar = new Button("Confirmar y Pagar " + String.format("%.2f €", carritoService.calcularTotal()), event -> {
+            Button btnPagar = new Button("Confirmar y Pagar " + String.format("%.2f €", carritoService.calcularTotal()),
+                    event -> {
 
-                String metodo = selectPago.getValue();
-                boolean validacionCorrecta = true;
+                        String metodo = selectPago.getValue();
+                        String tipo = selectTipo.getValue();
+                        boolean validacionCorrecta = true;
 
-                // --- VALIDACIONES ------------------------------------------------------------------------------------
-                if ("Tarjeta Bancaria".equals(metodo)) {
-                    // Validar Tarjeta (16 dígitos y que no esté vacía)
-                    if (txtNumTarjeta.isEmpty() || !txtNumTarjeta.getValue().matches("\\d{16}")) {
-                        Notification.show("Error: El número de tarjeta debe tener 16 dígitos numéricos").addThemeVariants(NotificationVariant.LUMO_ERROR);
-                        validacionCorrecta = false;
-                    }
-                    // Validar Fecha (Formato simple MM/YY)
-                    else if (txtFecha.isEmpty() || !txtFecha.getValue().matches("\\d{2}/\\d{2}")) {
-                        Notification.show("Error: La fecha debe ser MM/YY").addThemeVariants(NotificationVariant.LUMO_ERROR);
-                        validacionCorrecta = false;
-                    }
-                    // Validar CVV (3 dígitos)
-                    else if (txtCvv.isEmpty() || !txtCvv.getValue().matches("\\d{3}")) {
-                        Notification.show("Error: El CVV debe tener 3 dígitos").addThemeVariants(NotificationVariant.LUMO_ERROR);
-                        validacionCorrecta = false;
-                    }
+                        // --- VALIDACIONES
+                        // ------------------------------------------------------------------------------------
+                        // --- VALIDAR DIRECCIÓN ---
+                        String direccionFinal = ""; // Por defecto vacía
+                        if ("A Domicilio".equals(tipo)) {
+                            if (txtDireccion.isEmpty()) {
+                                Notification.show("Debes escribir una dirección de entrega").addThemeVariants(NotificationVariant.LUMO_ERROR);
+                                return;
+                            }
+                            direccionFinal = txtDireccion.getValue();
+                        }
 
-                } else if ("PayPal".equals(metodo)) {
-                    // Validar Email y Password
-                    if (emailPaypal.isEmpty() || emailPaypal.isInvalid()) {
-                        Notification.show("Error: Email de PayPal inválido").addThemeVariants(NotificationVariant.LUMO_ERROR);
-                        validacionCorrecta = false;
-                    } else if (passPaypal.isEmpty()) {
-                        Notification.show("Error: Falta la contraseña de PayPal").addThemeVariants(NotificationVariant.LUMO_ERROR);
-                        validacionCorrecta = false;
-                    }
-                }
 
-                // Si algo falló, paramos aquí
-                if (!validacionCorrecta) {
-                    return;
-                }
 
-                // SI TODO ESTÁ BIEN, PROCESAMOS
-                Notification.show("Procesando pago...", 1000, Notification.Position.MIDDLE);
-                Cliente clienteReal = null;
+                        if ("Tarjeta Bancaria".equals(metodo)) {
+                            // Validar Tarjeta (16 dígitos y que no esté vacía)
+                            if (txtNumTarjeta.isEmpty() || !txtNumTarjeta.getValue().matches("\\d{16}")) {
+                                Notification.show("Error: El número de tarjeta debe tener 16 dígitos numéricos")
+                                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                                validacionCorrecta = false;
+                            }
+                            // Validar Fecha (Formato simple MM/YY)
+                            else if (txtFecha.isEmpty() || !txtFecha.getValue().matches("\\d{2}/\\d{2}")) {
+                                Notification.show("Error: La fecha debe ser MM/YY")
+                                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                                validacionCorrecta = false;
+                            }
+                            // Validar CVV (3 dígitos)
+                            else if (txtCvv.isEmpty() || !txtCvv.getValue().matches("\\d{3}")) {
+                                Notification.show("Error: El CVV debe tener 3 dígitos")
+                                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                                validacionCorrecta = false;
+                            }
 
-                try {
-                    pedidoService.confirmarPedido(
-                            carritoService,
-                            clienteReal,
-                            selectTipo.getValue(),
-                            metodo
-                    );
+                        } else if ("PayPal".equals(metodo)) {
+                            // Validar Email y Password
+                            if (emailPaypal.isEmpty() || emailPaypal.isInvalid()) {
+                                Notification.show("Error: Email de PayPal inválido")
+                                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                                validacionCorrecta = false;
+                            } else if (passPaypal.isEmpty()) {
+                                Notification.show("Error: Falta la contraseña de PayPal")
+                                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                                validacionCorrecta = false;
+                            }
+                        }
 
-                    Notification.show("¡Pedido confirmado! (" + metodo + ") 🍔")
-                            .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                        if (!validacionCorrecta)
+                            return;
 
-                    carritoService.vaciarCarrito();
-                    actualizarVista();
-                    dialog.close();
 
-                } catch (Exception ex) {
-                    Notification.show("Error: " + ex.getMessage())
-                            .addThemeVariants(NotificationVariant.LUMO_ERROR);
-                }
-            });
+                        try {
+                            pedidoService.confirmarPedido(
+                                    carritoService,
+                                    finalClienteReal,
+                                    selectTipo.getValue(),
+                                    metodo,
+                                    direccionFinal);
+
+                            Notification.show("¡Pedido confirmado! (" + metodo + ") 🍔")
+                                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+
+                            carritoService.vaciarCarrito();
+                            actualizarVista();
+                            dialog.close();
+
+                            // REDIRECCIÓN A "MIS PEDIDOS" (DEL MAIN)
+                            UI.getCurrent().navigate("mis-pedidos");
+
+                        } catch (Exception ex) {
+                            Notification.show("Error: " + ex.getMessage())
+                                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                        }
+                    });
             btnPagar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
             dialog.getFooter().add(cancelar, btnPagar);
             dialog.open();
         });
 
-        HorizontalLayout footer = new HorizontalLayout(totalLabel, btnConfirmar);
+        HorizontalLayout footer = new HorizontalLayout(totalLabel, btnSeguir, btnConfirmar);
         footer.setWidthFull();
         footer.setAlignItems(Alignment.CENTER);
 
-        add(titulo, grid, footer, btnSeguir);
+        add(titulo, grid, footer);
     }
 
     private void actualizarVista() {

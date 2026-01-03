@@ -17,9 +17,10 @@ import java.util.List;
 import java.util.UUID;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.Arrays;
 
 @Service
-@Transactional(readOnly = true) 
+@Transactional(readOnly = true)
 public class PedidoService {
 
     private final PedidoRepository pedidoRepository;
@@ -28,55 +29,59 @@ public class PedidoService {
     private final ProductoService productoService;
 
     @Autowired
-    public PedidoService(PedidoRepository pedidoRepository, 
-                         LineaPedidoRepository lineaPedidoRepository,
-                         ProductoRepository productoRepository,
-                         ProductoService productoService) {
+    public PedidoService(PedidoRepository pedidoRepository,
+            LineaPedidoRepository lineaPedidoRepository,
+            ProductoRepository productoRepository,
+            ProductoService productoService) {
         this.pedidoRepository = pedidoRepository;
         this.lineaPedidoRepository = lineaPedidoRepository;
         this.productoRepository = productoRepository;
         this.productoService = productoService;
     }
 
-    
     public Pedido crearPedido(Cliente cliente, List<LineaPedidoDTO> lineasDTO) {
         if (lineasDTO == null || lineasDTO.isEmpty()) {
             throw new IllegalArgumentException("El pedido no contiene líneas de producto.");
         }
-        
+
         Pedido nuevoPedido = new Pedido();
         nuevoPedido.setCliente(cliente);
-        
-        
+
         Set<LineaPedido> lineas = lineasDTO.stream()
-            .map(dto -> createAndValidateLinea(dto, nuevoPedido))
-            .collect(Collectors.toSet());
-        
+                .map(dto -> createAndValidateLinea(dto, nuevoPedido))
+                .collect(Collectors.toSet());
+
         nuevoPedido.setLineas(lineas);
-        return pedidoRepository.save(nuevoPedido); 
+        return pedidoRepository.save(nuevoPedido);
     }
-    
-    
+
+    // Método nuevo para la vista de Cocina
+    public List<Pedido> findPedidosCocina() {
+        List<Pedido> todos = pedidoRepository.findAll();
+        return todos.stream()
+                .filter(p -> "RECIBIDO".equals(p.getEstado().getNombre())
+                        || "EN_COCINA".equals(p.getEstado().getNombre()))
+                .collect(Collectors.toList());
+    }
+
     @Transactional
     public Pedido modificarEstado(UUID pedidoId, EstadoPedido nuevoEstado) {
         Pedido pedido = pedidoRepository.findById(pedidoId)
                 .orElseThrow(() -> new RuntimeException("Pedido no encontrado."));
-        
-        
+
         pedido.setEstado(nuevoEstado);
         return pedidoRepository.save(pedido);
     }
-    
+
     public List<Pedido> findAll() {
         return pedidoRepository.findAll();
     }
-    
+
     public Pedido findById(UUID id) {
         return pedidoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Pedido no encontrado con ID: " + id));
     }
 
-   
     private LineaPedido createAndValidateLinea(LineaPedidoDTO dto, Pedido pedido) {
         Producto producto = productoRepository.findById(dto.productoId())
                 .orElseThrow(() -> new RuntimeException("Producto ID no válido: " + dto.productoId()));
@@ -87,9 +92,9 @@ public class PedidoService {
         linea.setPedido(pedido);
         linea.setProducto(producto);
         linea.setCantidad(dto.cantidad());
-    
-        linea.setPrecioUnitario(producto.getImporte()); 
-        
+
+        linea.setPrecioUnitario(producto.getImporte());
+
         return linea;
     }
 }

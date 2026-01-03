@@ -21,19 +21,19 @@ public class MenuService {
         this.tipoRepository = tipoRepository;
     }
 
-    //productos
+    // productos
     @Transactional(readOnly = true)
     public List<Producto> obtenerTodosLosProductos() {
         return productoRepository.findAll();
     }
 
-    //categorias
+    // categorias
     @Transactional(readOnly = true)
     public List<Tipo> obtenerTodosLosTipos() {
         return tipoRepository.findAll();
     }
 
-    //buscador
+    // buscador
     @Transactional(readOnly = true)
     public List<Producto> buscarProductos(String texto) {
         if (texto == null || texto.isEmpty()) {
@@ -42,5 +42,10 @@ public class MenuService {
         return productoRepository.findAll().stream()
                 .filter(p -> p.getNombre().toLowerCase().contains(texto.toLowerCase()))
                 .collect(Collectors.toList());
+    }
+
+    public List<Producto> obtenerProductosPorNegocio(String nombreNegocio) {
+        // Busca por nombre, ignorando mayúsculas/minúsculas si prefieres
+        return productoRepository.findByNegocioNombre(nombreNegocio);
     }
 }

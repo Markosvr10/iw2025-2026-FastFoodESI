@@ -1,5 +1,7 @@
 package com.ESI.FastFoodESI.service.admin;
+
 import com.ESI.FastFoodESI.model.Empleado;
+import com.ESI.FastFoodESI.model.Negocio;
 import com.ESI.FastFoodESI.model.Propietario;
 import com.ESI.FastFoodESI.repository.EmpleadoRepository;
 import org.springframework.stereotype.Service;
@@ -7,14 +9,16 @@ import java.util.List;
 
 @Service
 public class EmpleadoService {
-    
+
     private final EmpleadoRepository empleadoRepository;
 
     public EmpleadoService(EmpleadoRepository empleadoRepository) {
         this.empleadoRepository = empleadoRepository;
     }
 
-    public List<Empleado> findAll() { return empleadoRepository.findAll(); }
+    public List<Empleado> findAll() {
+        return empleadoRepository.findAll();
+    }
 
     public List<Empleado> findAllByPropietario(Propietario propietario) {
         return empleadoRepository.findByPropietario(propietario);
@@ -26,5 +30,9 @@ public class EmpleadoService {
 
     public void delete(Empleado empleado) {
         empleadoRepository.delete(empleado);
+    }
+
+    public List<Empleado> findAllByNegocio(Negocio negocio) {
+        return empleadoRepository.findByNegocio(negocio);
     }
 }

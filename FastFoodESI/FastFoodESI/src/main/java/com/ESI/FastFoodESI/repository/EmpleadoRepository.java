@@ -2,7 +2,9 @@ package com.ESI.FastFoodESI.repository;
 
 import com.ESI.FastFoodESI.dto.RankingItemDTO;
 import com.ESI.FastFoodESI.model.Empleado;
+import com.ESI.FastFoodESI.model.Negocio;
 import com.ESI.FastFoodESI.model.Propietario;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,7 +14,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.domain.Pageable;
 
 @Repository
 public interface EmpleadoRepository extends JpaRepository<Empleado, UUID> {
@@ -32,4 +33,6 @@ public interface EmpleadoRepository extends JpaRepository<Empleado, UUID> {
             Pageable pageable);
 
     Optional<Empleado> findByDni(String dni);
+
+    List<Empleado> findByNegocio(Negocio negocio);
 }

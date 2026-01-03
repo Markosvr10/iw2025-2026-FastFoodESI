@@ -2,6 +2,7 @@ package com.ESI.FastFoodESI.service.cliente;
 
 import com.ESI.FastFoodESI.model.Cliente;
 import com.ESI.FastFoodESI.repository.ClienteRepository;
+import com.ESI.FastFoodESI.service.cliente.EmailService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

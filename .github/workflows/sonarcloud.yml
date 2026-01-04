@@ -36,5 +36,5 @@ jobs:
         run: |
           mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
             -Dsonar.projectKey=luistn19_fastfoodesi \
-            -Dsonar.organization=luistn \
+            -Dsonar.organization=luistn19 \
             -Dsonar.host.url=https://sonarcloud.io

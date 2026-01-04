@@ -122,14 +122,20 @@ public class CartaView extends VerticalLayout implements HasUrlParameter<String>
             this.productosDelNegocio = menuService.obtenerTodosLosProductos();
             tituloCarta.setText("Carta de " + nombreNegocioActual);
         } else {
-            this.productosDelNegocio = menuService.obtenerProductosPorNegocio(parameter);
-            String nombreVisual = parameter.replace("_", " ");
-            tituloCarta.setText("Carta de " + nombreVisual);
+            // 1. Transformamos el parámetro de la URL (con guiones bajos) al formato de BD
+            // (con espacios)
+            // Ejemplo: URL "FastFoodESI_Cádiz" -> Buscamos "FastFoodESI Cádiz"
+            String nombreParaBusqueda = parameter.replace("_", " ");
 
-            this.nombreNegocioActual = parameter; // Guardamos el real por si acaso
+            // 2. Usamos el nombre CON ESPACIOS para buscar en la base de datos
+            this.productosDelNegocio = menuService.obtenerProductosPorNegocio(nombreParaBusqueda);
+
+            // 3. Actualizamos la UI
+            this.nombreNegocioActual = nombreParaBusqueda;
+            tituloCarta.setText("Carta de " + nombreNegocioActual);
 
             if (productosDelNegocio.isEmpty()) {
-                Notification.show("No se encontraron productos en: " + nombreVisual)
+                Notification.show("No se encontraron productos para el negocio: " + nombreParaBusqueda)
                         .addThemeVariants(NotificationVariant.LUMO_ERROR);
             }
         }

@@ -1,4 +1,4 @@
-package com.ESI.FastFoodESI.service;
+package com.ESI.FastFoodESI.service.cliente;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;

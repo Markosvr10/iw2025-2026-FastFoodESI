@@ -38,6 +38,9 @@ public class ProductoForm extends VerticalLayout {
     private Runnable onSaveListener; 
 
     TextField nombre = new TextField("Nombre");
+
+    TextField imagenUrl = new TextField("URL de la Imagen"); 
+    
     TextArea descripcion = new TextArea("Descripción");
     BigDecimalField importe = new BigDecimalField("Precio (€)");
     IntegerField stock = new IntegerField("Stock");
@@ -55,12 +58,14 @@ public class ProductoForm extends VerticalLayout {
 
         tipo.setItems(tipoRepository.findAll());
         tipo.setItemLabelGenerator(Tipo::getNombre);
+        
+        imagenUrl.setPlaceholder("https://ejemplo.com/foto.jpg");
+        imagenUrl.setClearButtonVisible(true);
 
         binder.bindInstanceFields(this);
 
         add(createFormLayout(), createButtonsLayout());
     }
-
 
     public void setOnSaveListener(Runnable onSaveListener) {
         this.onSaveListener = onSaveListener;
@@ -69,16 +74,32 @@ public class ProductoForm extends VerticalLayout {
     public void setProducto(Producto producto, Dialog dialog) {
         this.currentProducto = producto;
         this.parentDialog = dialog;
+        
+        tipo.setItems(tipoRepository.findAll());
+        
         binder.readBean(producto);
     }
 
     private Component createFormLayout() {
         FormLayout formLayout = new FormLayout();
+        
         nombre.setWidthFull();
+        imagenUrl.setWidthFull();
         descripcion.setWidthFull();
         
-        formLayout.add(nombre, tipo, importe, stock, descripcion);
+        formLayout.add(
+            nombre, 
+            tipo, 
+            importe, 
+            stock, 
+            imagenUrl,
+            descripcion
+        );
+
+
+        formLayout.setColspan(imagenUrl, 2);
         formLayout.setColspan(descripcion, 2);
+        
         return formLayout;
     }
 

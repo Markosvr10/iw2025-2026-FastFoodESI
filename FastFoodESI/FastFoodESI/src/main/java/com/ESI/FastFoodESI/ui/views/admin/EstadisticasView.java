@@ -1,13 +1,13 @@
 package com.ESI.FastFoodESI.ui.views.admin;
 
-import com.vaadin.flow.component.select.Select;
-import com.ESI.FastFoodESI.model.Producto;
-import com.ESI.FastFoodESI.service.admin.EstadisticasService;
 import com.ESI.FastFoodESI.dto.EstadisticaDTO;
 import com.ESI.FastFoodESI.dto.RankingItemDTO;
+import com.ESI.FastFoodESI.model.Producto;
+import com.ESI.FastFoodESI.model.Propietario;
+import com.ESI.FastFoodESI.security.SecurityService;
+import com.ESI.FastFoodESI.service.admin.EstadisticasService;
 import com.ESI.FastFoodESI.ui.layouts.admin.PropietarioMainLayout;
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.combobox.ComboBox; 
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.Div;
@@ -18,44 +18,59 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.RolesAllowed;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.List;
 
 @Route(value = "admin/estadisticas", layout = PropietarioMainLayout.class)
 @PageTitle("Estadísticas | FastFood ESI")
-@RolesAllowed("PROPIETARIO") 
+@RolesAllowed("PROPIETARIO")
 public class EstadisticasView extends VerticalLayout {
 
-    private final EstadisticasService service;
-    
+    private final EstadisticasService estadisticasService;
+    private final Propietario currentUser;
+
     private Grid<RankingItemDTO> gridEmpleados;
     private Grid<RankingItemDTO> gridNegocios;
     private Grid<RankingItemDTO> gridProductos;
-    private ComboBox<String> periodoSelector;
+    private Select<String> selectorPeriodo; 
 
-    public EstadisticasView(EstadisticasService service) {
-        this.service = service;
-        
+    public EstadisticasView(EstadisticasService estadisticasService, SecurityService securityService) {
+        this.estadisticasService = estadisticasService;
+
+        UserDetails userDetails = securityService.getAuthenticatedUser();
+        if (userDetails != null) {
+            this.currentUser = estadisticasService.getPropietarioByCorreo(userDetails.getUsername());
+        } else {
+            this.currentUser = null;
+        }
+
         addClassName("estadisticas-view");
-        
-        setWidthFull(); 
-        setHeight(null);   
+        setWidthFull();
+        setHeight(null);
         setPadding(true);
         setSpacing(true);
 
+        if (currentUser == null) {
+            add(new H2("Error: No se pudo identificar al usuario."));
+            return;
+        }
+
         add(new H2("Panel de Control - Pedidos y Stock"));
 
-        EstadisticaDTO stats = service.obtenerEstadisticasPedidos();
+        EstadisticaDTO stats = estadisticasService.obtenerEstadisticasPedidos(); 
         add(createKpiSection(stats));
 
         add(new H4("🏆 Rankings Top 5"));
+        
         add(createRankingFilter());      
         add(createRankingsLayout());     
         
-        updateRankings("HISTORICO");
+        updateRankings();
 
         add(new H4("⚠️ Alerta: Productos con Stock Bajo (< 20 unidades)"));
         add(createLowStockGrid());
@@ -65,13 +80,12 @@ public class EstadisticasView extends VerticalLayout {
         add(spacer);
     }
 
-
     private Component createRankingFilter() {
-        Select<String> select = new Select<>();
-        select.setLabel("Periodo de Análisis");
+        selectorPeriodo = new Select<>();
+        selectorPeriodo.setLabel("Periodo de Análisis");
         
-        select.setItems("DIA", "MES", "ANNO", "HISTORICO");
-        select.setItemLabelGenerator(item -> {
+        selectorPeriodo.setItems("DIA", "MES", "ANNO", "HISTORICO");
+        selectorPeriodo.setItemLabelGenerator(item -> {
             switch(item) {
                 case "DIA": return "Hoy";
                 case "MES": return "Este Mes";
@@ -80,10 +94,10 @@ public class EstadisticasView extends VerticalLayout {
             }
         });
         
-        select.setValue("HISTORICO"); 
-        select.addValueChangeListener(e -> updateRankings(e.getValue()));
+        selectorPeriodo.setValue("HISTORICO");
+        selectorPeriodo.addValueChangeListener(e -> updateRankings());
         
-        return select;
+        return selectorPeriodo;
     }
 
     private Component createRankingsLayout() {
@@ -115,19 +129,25 @@ public class EstadisticasView extends VerticalLayout {
         
         grid.addThemeVariants(GridVariant.LUMO_COMPACT, GridVariant.LUMO_ROW_STRIPES);
         grid.setHeight("250px");
-        
         grid.getStyle().set("flex", "1 1 300px"); 
         
         return grid;
     }
 
-    private void updateRankings(String periodo) {
-        if (periodo == null) return;
-        gridEmpleados.setItems(service.getRankingEmpleados(periodo));
-        gridNegocios.setItems(service.getRankingNegocios(periodo));
-        gridProductos.setItems(service.getRankingProductos(periodo));
-    }
+    private void updateRankings() {
+        if (currentUser == null) return;
 
+        String periodo = selectorPeriodo.getValue();
+        
+        List<RankingItemDTO> topEmpleados = estadisticasService.getTopEmpleados(currentUser, periodo);
+        gridEmpleados.setItems(topEmpleados);
+
+        List<RankingItemDTO> topNegocios = estadisticasService.getTopNegocios(currentUser, periodo);
+        gridNegocios.setItems(topNegocios);
+
+        List<RankingItemDTO> topProductos = estadisticasService.getTopProductos(currentUser, periodo);
+        gridProductos.setItems(topProductos);
+    }
 
     private Component createKpiSection(EstadisticaDTO stats) {
         FlexLayout layout = new FlexLayout();
@@ -164,14 +184,13 @@ public class EstadisticasView extends VerticalLayout {
           .setAutoWidth(true)
           .setFlexGrow(0);
 
-        List<Producto> productosAlert = service.obtenerProductosBajoStock(20);
+        
+        List<Producto> productosAlert = estadisticasService.obtenerProductosBajoStock(20);
         grid.setItems(productosAlert);
         
         grid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES, GridVariant.LUMO_COMPACT);
-        
         grid.setWidthFull(); 
         grid.setHeight("300px"); 
-        
         grid.getStyle().set("flex-shrink", "0"); 
         
         return grid;

@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.util.Set;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -36,15 +37,20 @@ public class Negocio {
 
     @Transient 
     public Integer getnEmpleados() {
-        return 0; 
+        if (empleados == null) return 0;
+        return empleados.size(); 
     }
 
-   // --- RELACIONES ---
+    // --- RELACIONES ---
 
     @NotNull(message = "El negocio debe tener un propietario asignado.")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "propietario_id", nullable = false)
     private Propietario propietario; 
+
+    @OneToMany(mappedBy = "negocio", fetch = FetchType.LAZY, targetEntity = Empleado.class)
+    private List<Empleado> empleados;
+
 
     @OneToMany(mappedBy = "negocio", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<Carta> cartas;
@@ -118,5 +124,13 @@ public class Negocio {
 
     public void setCartas(Set<Carta> cartas) {
         this.cartas = cartas;
+    }
+
+    public List<Empleado> getEmpleados() {
+        return empleados;
+    }
+
+    public void setEmpleados(List<Empleado> empleados) {
+        this.empleados = empleados;
     }
 }

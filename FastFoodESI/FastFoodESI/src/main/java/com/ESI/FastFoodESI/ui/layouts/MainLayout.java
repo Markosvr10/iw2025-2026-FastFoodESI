@@ -13,6 +13,7 @@ import com.vaadin.flow.component.contextmenu.MenuItem;
 import com.vaadin.flow.component.contextmenu.SubMenu;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -41,10 +42,10 @@ public class MainLayout extends AppLayout {
 
     private void createHeader() {
         // LOGO > carta
-        H1 logo = new H1("FastFood ESI");
-        logo.getStyle().set("font-size", "20px");
-        logo.getStyle().set("margin", "0");
-        logo.getStyle().set("color", "var(--lumo-primary-text-color)");
+        Image logo = new Image("images/LogoFastFoodESI.png", "FastFood ESI");
+        logo.setHeight("100px");
+        
+        logo.getStyle().set("margin-right", "10px"); 
 
         RouterLink linkCarta = new RouterLink(CartaView.class);
         linkCarta.add(logo);

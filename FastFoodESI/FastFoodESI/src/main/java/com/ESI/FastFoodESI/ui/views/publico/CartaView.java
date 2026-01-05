@@ -27,6 +27,7 @@ import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.OptionalParameter;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 
 import java.util.ArrayList;
@@ -117,30 +118,33 @@ public class CartaView extends VerticalLayout implements HasUrlParameter<String>
     public void setParameter(BeforeEvent event, @OptionalParameter String parameter) {
         tabsCategorias.removeAll();
 
+        // --- CAMBIO: LÓGICA DE MEMORIA DE SESIÓN ---
+        // Guardamos el parámetro "crudo" (ej: FastFoodESI_Cádiz) en la sesión
+        // para que el MainLayout sepa a dónde volver.
         if (parameter == null || parameter.isEmpty()) {
+            // Si estamos en la general, borramos la memoria
+            VaadinSession.getCurrent().setAttribute("ULTIMO_NEGOCIO", null);
+
             this.nombreNegocioActual = "Todos los Negocios";
             this.productosDelNegocio = menuService.obtenerTodosLosProductos();
             tituloCarta.setText("Carta de " + nombreNegocioActual);
         } else {
-            // 1. Transformamos el parámetro de la URL (con guiones bajos) al formato de BD
-            // (con espacios)
-            // Ejemplo: URL "FastFoodESI_Cádiz" -> Buscamos "FastFoodESI Cádiz"
-            String nombreParaBusqueda = parameter.replace("_", " ");
+            // Si estamos en un negocio, lo recordamos
+            VaadinSession.getCurrent().setAttribute("ULTIMO_NEGOCIO", parameter);
 
-            // 2. Usamos el nombre CON ESPACIOS para buscar en la base de datos
+            String nombreParaBusqueda = parameter.replace("_", " ");
             this.productosDelNegocio = menuService.obtenerProductosPorNegocio(nombreParaBusqueda);
 
-            // 3. Actualizamos la UI
             this.nombreNegocioActual = nombreParaBusqueda;
             tituloCarta.setText("Carta de " + nombreNegocioActual);
 
             if (productosDelNegocio.isEmpty()) {
-                Notification.show("No se encontraron productos para el negocio: " + nombreParaBusqueda)
+                Notification.show("No se encontraron productos para: " + nombreParaBusqueda)
                         .addThemeVariants(NotificationVariant.LUMO_ERROR);
             }
         }
+        // -------------------------------------------
 
-        // Regenerar pestañas y mostrar productos
         generarPestañasDinamicas();
         filtrarProductos();
     }

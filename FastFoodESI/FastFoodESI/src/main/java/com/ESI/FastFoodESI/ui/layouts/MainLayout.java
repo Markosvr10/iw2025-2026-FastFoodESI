@@ -12,7 +12,6 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.contextmenu.MenuItem;
 import com.vaadin.flow.component.contextmenu.SubMenu;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
@@ -22,6 +21,7 @@ import com.vaadin.flow.component.menubar.MenuBarVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.router.RouterLink;
+import com.vaadin.flow.server.VaadinSession; // IMPORTANTE: Importar VaadinSession
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -41,17 +41,31 @@ public class MainLayout extends AppLayout {
     }
 
     private void createHeader() {
-        // LOGO > carta
+        // --- LOGO INTELIGENTE ---
         Image logo = new Image("images/LogoFastFoodESI.png", "FastFood ESI");
         logo.setHeight("100px");
-        
-        logo.getStyle().set("margin-right", "10px"); 
+        logo.getStyle().set("margin-right", "10px");
+        logo.getStyle().set("cursor", "pointer"); // Hacemos que parezca clickeable
 
-        RouterLink linkCarta = new RouterLink(CartaView.class);
-        linkCarta.add(logo);
-        linkCarta.getStyle().set("text-decoration", "none");
+        // Lógica de redirección inteligente:
+        logo.addClickListener(e -> {
+            // Recuperamos el negocio guardado en la sesión
+            String ultimoNegocio = (String) VaadinSession.getCurrent().getAttribute("ULTIMO_NEGOCIO");
 
-        HorizontalLayout header = new HorizontalLayout(linkCarta);
+            if (ultimoNegocio != null && !ultimoNegocio.isEmpty()) {
+                // Si venimos de un negocio, volvemos a ÉL
+                UI.getCurrent().navigate("carta/" + ultimoNegocio);
+            } else {
+                // Si no, vamos a la general
+                UI.getCurrent().navigate("carta");
+            }
+        });
+
+        // Envolvemos el logo en un layout simple
+        HorizontalLayout logoWrapper = new HorizontalLayout(logo);
+        logoWrapper.setAlignItems(FlexComponent.Alignment.CENTER);
+
+        HorizontalLayout header = new HorizontalLayout(logoWrapper);
         header.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
         header.setWidthFull();
         header.setPadding(true);
@@ -102,7 +116,7 @@ public class MainLayout extends AppLayout {
             MenuBar userMenu = new MenuBar();
             userMenu.addThemeVariants(MenuBarVariant.LUMO_TERTIARY_INLINE);
 
-            MenuItem userItem = userMenu.addItem(createAvatar(nombreMostrar)); //para que muestre el nombre
+            MenuItem userItem = userMenu.addItem(createAvatar(nombreMostrar)); // para que muestre el nombre
             SubMenu subMenu = userItem.getSubMenu();
 
             // Mi Perfil

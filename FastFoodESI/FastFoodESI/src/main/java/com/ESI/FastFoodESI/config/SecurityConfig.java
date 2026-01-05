@@ -47,7 +47,9 @@ public class SecurityConfig extends VaadinWebSecurity {
                     String role = authentication.getAuthorities().iterator().next().getAuthority();
                     String redirectUrl = "/";
 
-                    if ("ROLE_PROPIETARIO".equals(role)) {
+                    if ("ROLE_CLIENTE".equals(role)) {
+                        redirectUrl = "/carta";
+                    } else if ("ROLE_PROPIETARIO".equals(role)) {
                         // Por defecto, al panel de admin
                         redirectUrl = "admin/negocios";
 

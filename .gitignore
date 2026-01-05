@@ -3,3 +3,9 @@
 .vscode/
 *.swp
 .DS_Store
+# Vaadin generated files
+node_modules/
+src/main/frontend/generated/
+target/
+frontend/generated/
+vite.generated.ts

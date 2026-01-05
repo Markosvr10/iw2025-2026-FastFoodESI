@@ -43,7 +43,7 @@ public class ClienteService {
 
         //***************************************************
         //PONER EN FALSEE -> SIMPLEMENTE ES PARA Q NO TENGAN QUE VERIFICAR EL CORRO CON EL MAILTRAP PARA LAS PRUEBAS
-        cliente.setVerificado(true);// Nace bloqueado
+        cliente.setVerificado(false);// Nace bloqueado
 
         // guardar en BD
         clienteRepository.save(cliente);

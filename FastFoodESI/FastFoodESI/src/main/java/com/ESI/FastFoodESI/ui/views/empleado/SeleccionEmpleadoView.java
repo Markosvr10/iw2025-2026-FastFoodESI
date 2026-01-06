@@ -2,10 +2,8 @@ package com.ESI.FastFoodESI.ui.views.empleado;
 
 import com.ESI.FastFoodESI.model.Empleado;
 import com.ESI.FastFoodESI.model.Negocio;
-import com.ESI.FastFoodESI.model.Propietario;
 import com.ESI.FastFoodESI.repository.PropietarioRepository;
 import com.ESI.FastFoodESI.service.admin.EmpleadoService;
-import com.ESI.FastFoodESI.ui.layouts.MainLayout;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.UI;
@@ -14,7 +12,6 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
-import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
@@ -26,13 +23,10 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 import jakarta.annotation.security.RolesAllowed;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Route(value = "seleccion-empleado", layout = MainLayout.class)
+@Route(value = "seleccion-empleado")
 @PageTitle("¿Quién eres? | FastFood ESI")
 @RolesAllowed({ "PROPIETARIO", "ADMIN" })
 public class SeleccionEmpleadoView extends VerticalLayout implements BeforeEnterObserver {
@@ -76,14 +70,10 @@ public class SeleccionEmpleadoView extends VerticalLayout implements BeforeEnter
     private void cargarEmpleados() {
         gridEmpleados.removeAll();
 
-        // 1. RECUPERAMOS EL NEGOCIO DE LA SESIÓN (Hamburguesas Juan)
-        // Este objeto se guardó cuando metiste el ID 'aaaa...' en la pantalla anterior
         Negocio negocioActivo = (Negocio) VaadinSession.getCurrent().getAttribute("NEGOCIO_ACTIVO");
 
         if (negocioActivo != null) {
 
-            // 2. BUSCAMOS POR NEGOCIO, NO POR PROPIETARIO
-            // Esto buscará a Laura y Carlos porque tienen el negocio_id = aaaa...
             List<Empleado> todos = empleadoService.findAllByNegocio(negocioActivo);
 
             // Filtro por Rol (Cocina, Repartidor...)
@@ -125,15 +115,11 @@ public class SeleccionEmpleadoView extends VerticalLayout implements BeforeEnter
         pinField.focus();
 
         Button btnEntrar = new Button("Entrar", e -> {
-            // --- VALIDACIÓN SIN TOCAR BD ---
             // Usamos el DNI como contraseña.
-            // Si el usuario escribió el DNI correcto -> ADENTRO.
             if (empleado.getDni().equalsIgnoreCase(pinField.getValue())) {
 
-                // 1. Guardar empleado en sesión
                 VaadinSession.getCurrent().setAttribute("EMPLEADO_ACTIVO", empleado);
 
-                // 2. Navegar a la vista correspondiente
                 dialog.close();
                 navegarAVistaDeRol();
 

@@ -2,7 +2,6 @@ package com.ESI.FastFoodESI.ui.views.empleado;
 
 import com.ESI.FastFoodESI.model.*;
 import com.ESI.FastFoodESI.repository.*;
-import com.ESI.FastFoodESI.ui.layouts.MainLayout;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -29,10 +28,10 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Route(value = "camarero", layout = MainLayout.class)
+@Route(value = "camarero")
 @PageTitle("Comandero | FastFood ESI")
 @RolesAllowed({ "CAMARERO", "PROPIETARIO" })
-public class CamareroView extends VerticalLayout { // CAMBIO: Ahora es VerticalLayout
+public class CamareroView extends VerticalLayout {
 
     private final ProductoRepository productoRepository;
     private final PedidoRepository pedidoRepository;
@@ -104,8 +103,6 @@ public class CamareroView extends VerticalLayout { // CAMBIO: Ahora es VerticalL
         layout.setWidth("60%");
         layout.setHeightFull();
 
-        // Quitamos el H2 de aquí porque ya está en el header general, o lo cambiamos
-        // por H3
         H4 subtitulo = new H4("Selección de Productos");
 
         Tabs tabs = new Tabs();
@@ -144,9 +141,6 @@ public class CamareroView extends VerticalLayout { // CAMBIO: Ahora es VerticalL
         layout.add(subtitulo, tabs, gridProductos);
         return layout;
     }
-
-    // ... (El resto de métodos: crearZonaTicket, cargarProductos, agregarAlTicket,
-    // actualizarTicket, finalizarPedido SE MANTIENEN IGUAL) ...
 
     private Component crearZonaTicket() {
         VerticalLayout layout = new VerticalLayout();

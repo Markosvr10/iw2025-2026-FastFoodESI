@@ -1,8 +1,9 @@
 package com.ESI.FastFoodESI.ui.views.empleado;
 
-import com.ESI.FastFoodESI.ui.layouts.MainLayout;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
@@ -14,7 +15,7 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.VaadinSession;
 import jakarta.annotation.security.RolesAllowed;
 
-@Route(value = "hub-empleados", layout = MainLayout.class)
+@Route(value = "hub-empleados")
 @PageTitle("Selección de Puesto | FastFood ESI")
 @RolesAllowed({ "PROPIETARIO", "ADMIN" }) // La cuenta del local es un Propietario
 public class HubRolesView extends VerticalLayout {
@@ -24,6 +25,20 @@ public class HubRolesView extends VerticalLayout {
         setSizeFull();
         setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.CENTER);
+
+        Button btnLogout = new Button("Cerrar Sesión", VaadinIcon.SIGN_OUT.create());
+        btnLogout.addThemeVariants(ButtonVariant.LUMO_ERROR);
+
+        btnLogout.getStyle().set("position", "absolute");
+        btnLogout.getStyle().set("top", "20px");
+        btnLogout.getStyle().set("right", "20px");
+        btnLogout.getStyle().set("cursor", "pointer");
+
+        btnLogout.addClickListener(e -> {
+            UI.getCurrent().getPage().setLocation("/logout");
+        });
+
+        add(btnLogout);
 
         add(new H2("¿En qué puesto vas a trabajar hoy?"));
 

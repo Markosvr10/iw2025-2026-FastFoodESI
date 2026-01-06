@@ -2,7 +2,6 @@ package com.ESI.FastFoodESI.ui.views.empleado;
 
 import com.ESI.FastFoodESI.model.*;
 import com.ESI.FastFoodESI.repository.*;
-import com.ESI.FastFoodESI.ui.layouts.MainLayout;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -29,7 +28,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Route(value = "mostrador", layout = MainLayout.class)
+@Route(value = "mostrador")
 @PageTitle("TPV Mostrador | FastFood ESI")
 @RolesAllowed({ "MOSTRADOR", "PROPIETARIO" })
 public class MostradorView extends VerticalLayout {
@@ -86,7 +85,7 @@ public class MostradorView extends VerticalLayout {
     }
 
     private void configurarPestañas() {
-        // --- NUEVO: HEADER GLOBAL CON BOTÓN VOLVER ---
+        // --- HEADER GLOBAL CON BOTÓN VOLVER ---
         HorizontalLayout header = new HorizontalLayout();
         header.setWidthFull();
         header.setAlignItems(Alignment.CENTER);
@@ -100,7 +99,6 @@ public class MostradorView extends VerticalLayout {
 
         header.add(tituloGeneral, btnVolver);
         add(header);
-        // --------------------------------------------
 
         tabsPrincipales = new Tabs();
         tabsPrincipales.setWidthFull();

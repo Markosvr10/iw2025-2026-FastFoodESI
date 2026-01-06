@@ -8,6 +8,8 @@ import com.ESI.FastFoodESI.service.cliente.CarritoService;
 import com.ESI.FastFoodESI.dto.LineaCarrito;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -18,22 +20,24 @@ import java.math.BigDecimal;
 @Service
 public class PedidoClienteService {
 
+    private static final Logger logger = LoggerFactory.getLogger(PedidoClienteService.class);
+
     private final PedidoRepository pedidoRepository;
     private final LineaPedidoRepository lineaPedidoRepository;
     private final EstadoPedidoRepository estadoPedidoRepository;
 
     public PedidoClienteService(PedidoRepository pedidoRepository,
-                                LineaPedidoRepository lineaPedidoRepository,
-                                EstadoPedidoRepository estadoPedidoRepository) {
+            LineaPedidoRepository lineaPedidoRepository,
+            EstadoPedidoRepository estadoPedidoRepository) {
         this.pedidoRepository = pedidoRepository;
         this.lineaPedidoRepository = lineaPedidoRepository;
         this.estadoPedidoRepository = estadoPedidoRepository;
     }
 
-
-    //metodo de pago
+    // metodo de pago
     @Transactional
-    public Pedido confirmarPedido(CarritoService carrito, Cliente cliente, String tipoEntrega, String metodoPago, String direccion) {
+    public Pedido confirmarPedido(CarritoService carrito, Cliente cliente, String tipoEntrega, String metodoPago,
+            String direccion) {
 
         Pedido pedido = new Pedido();
         pedido.setCliente(cliente);
@@ -68,6 +72,12 @@ public class PedidoClienteService {
 
             lineaPedidoRepository.save(lineaBD);
         }
+
+        logger.info("AUDITORIA - NUEVO PEDIDO CLIENTE: ID: {} | Cliente: {} | Total: {} € | Pago: {}",
+                pedido.getId(),
+                cliente.getCorreo(),
+                pedido.getTotal(),
+                metodoPago);
 
         return pedido;
     }

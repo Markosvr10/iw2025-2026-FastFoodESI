@@ -11,12 +11,16 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 
 @EnableWebSecurity
 @Configuration
 public class SecurityConfig extends VaadinWebSecurity {
+
+    private static final Logger logger = LoggerFactory.getLogger(SecurityConfig.class);
 
     // Inyectamos el repositorio para poder buscar el apellido del usuario en el
     // login
@@ -44,6 +48,11 @@ public class SecurityConfig extends VaadinWebSecurity {
         // --- LÓGICA DE REDIRECCIÓN INTELIGENTE ---
         http.formLogin(login -> login
                 .successHandler((request, response, authentication) -> {
+
+                    logger.info("AUDITORIA - LOGIN EXITOSO: Usuario: [ {} ] | Roles: {}",
+                            authentication.getName(),
+                            authentication.getAuthorities());
+
                     String role = authentication.getAuthorities().iterator().next().getAuthority();
                     String redirectUrl = "/";
 

@@ -5,7 +5,6 @@ import com.ESI.FastFoodESI.model.Negocio;
 import com.ESI.FastFoodESI.model.Pedido;
 import com.ESI.FastFoodESI.repository.EstadoPedidoRepository;
 import com.ESI.FastFoodESI.repository.PedidoRepository;
-import com.ESI.FastFoodESI.ui.layouts.MainLayout;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -24,10 +23,9 @@ import jakarta.annotation.security.RolesAllowed;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
-@Route(value = "repartidor", layout = MainLayout.class)
+@Route(value = "repartidor")
 @PageTitle("Reparto | FastFood ESI")
 @RolesAllowed({ "REPARTIDOR", "PROPIETARIO" })
 public class RepartidorView extends VerticalLayout {

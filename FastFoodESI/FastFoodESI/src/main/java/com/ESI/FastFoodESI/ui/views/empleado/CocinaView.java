@@ -5,10 +5,7 @@ import com.ESI.FastFoodESI.model.LineaPedido;
 import com.ESI.FastFoodESI.model.Pedido;
 import com.ESI.FastFoodESI.repository.EstadoPedidoRepository;
 import com.ESI.FastFoodESI.service.admin.PedidoService;
-import com.ESI.FastFoodESI.ui.layouts.MainLayout;
-// --- IMPORTANTE: Importación correcta de UI ---
 import com.vaadin.flow.component.UI;
-// ---------------------------------------------
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -30,7 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-@Route(value = "cocina", layout = MainLayout.class)
+@Route(value = "cocina")
 @PageTitle("Cocina | FastFood ESI")
 @RolesAllowed({ "COCINA", "PROPIETARIO" })
 @SpringComponent
@@ -70,14 +67,11 @@ public class CocinaView extends VerticalLayout {
         Button refreshButton = new Button("Actualizar Tablero", VaadinIcon.REFRESH.create());
         refreshButton.addClickListener(click -> updateList());
 
-        // --- CORRECCIÓN: AÑADIR LOS DOS BOTONES AL HEADER ---
-        // Agrupamos los botones a la derecha para que quede ordenado
         HorizontalLayout botonesDerecha = new HorizontalLayout(btnVolver, refreshButton);
         header.add(new H2("Monitor de Cocina (KDS)"), botonesDerecha);
 
         add(header);
 
-        // --- RESTO DEL LAYOUT (Igual que antes) ---
         HorizontalLayout mainLayout = new HorizontalLayout();
         mainLayout.setSizeFull();
         mainLayout.setSpacing(true);

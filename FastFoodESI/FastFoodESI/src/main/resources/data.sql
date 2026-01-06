@@ -41,10 +41,18 @@ VALUES (random_uuid(), '12345678A', 'Jefe', 'Supremo', 'admin@esi.es', '{noop}12
 INSERT INTO propietarios (id, nombre, apellido, dni, correo, password, fecha_nac) 
 VALUES (random_uuid(), 'Juan', 'Dueño', '87654321B', 'juan@esi.es', '{noop}pass123', '1985-05-05');
 
+-- PROPIETARIO SISTEMA AUXILIAR PARA ACCESO A NEGOCIOS
+INSERT INTO propietarios (id, nombre, apellido, dni,  correo, password, fecha_nac)
+VALUES (random_uuid(), 'Terminal', 'Establecimiento','00000000X', 'sistema_tpv', '{noop}pass123', '2024-01-01');
+
 -- Clientes
 
 INSERT INTO clientes (id, nombre, apellido, dni, correo, telefono, password)
 VALUES (random_uuid(), 'Pepito', 'Perez', '87654321Z', 'cliente@esi.es', '600123456', '1234');
+
+-- CLIENTE GENERICO AL CUAL ASIGNARLES PEDIDOS EN RESTAURANTE
+INSERT INTO clientes (id, nombre, apellido, dni, correo, telefono, password)
+VALUES (random_uuid(), 'Cliente', 'Generico', '99999999X', 'clienteGenerico@esi.es', '00000000', 'clientegenerico');
 
 -- NEGOCIOS
 INSERT INTO negocios (id, nombre, direccion, telefono, propietario_id) 

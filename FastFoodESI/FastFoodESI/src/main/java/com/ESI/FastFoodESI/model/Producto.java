@@ -17,7 +17,7 @@ public class Producto {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-    //-----------------------------------------------------------------------------------------------
+    // -----------------------------------------------------------------------------------------------
     @Column(name = "imagen_url")
     private String imagenUrl;
 
@@ -49,11 +49,7 @@ public class Producto {
     private Tipo tipo; // Asumiendo que crearás una @Entity "Tipo"
 
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-        name = "producto_alergenos",
-        joinColumns = @JoinColumn(name = "producto_id"),
-        inverseJoinColumns = @JoinColumn(name = "alergeno_id")
-    )
+    @JoinTable(name = "producto_alergenos", joinColumns = @JoinColumn(name = "producto_id"), inverseJoinColumns = @JoinColumn(name = "alergeno_id"))
     private Set<Alergeno> alergenos; // Asumiendo que crearás una @Entity "Alergeno"
 
     @ManyToMany(mappedBy = "productos", fetch = FetchType.LAZY)
@@ -144,11 +140,20 @@ public class Producto {
         this.cartas = cartas;
     }
 
+    // -----------------------------------------------------------------------------------------------
+    public String getImagenUrl() {
+        return imagenUrl;
+    }
 
-//-----------------------------------------------------------------------------------------------
-    public String getImagenUrl() { return imagenUrl; }
-    public void setImagenUrl(String imagenUrl) { this.imagenUrl = imagenUrl; }
+    public void setImagenUrl(String imagenUrl) {
+        this.imagenUrl = imagenUrl;
+    }
 
-    public Negocio getNegocio() { return negocio; }
-    public void setNegocio(Negocio negocio) { this.negocio = negocio; }
+    public Negocio getNegocio() {
+        return negocio;
+    }
+
+    public void setNegocio(Negocio negocio) {
+        this.negocio = negocio;
+    }
 }

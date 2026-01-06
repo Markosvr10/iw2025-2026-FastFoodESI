@@ -1,6 +1,9 @@
 package com.ESI.FastFoodESI.ui.views.admin;
 
+import com.ESI.FastFoodESI.model.Negocio;
 import com.ESI.FastFoodESI.model.Producto;
+import com.ESI.FastFoodESI.repository.CartaRepository;
+import com.ESI.FastFoodESI.service.admin.NegocioService;
 import com.ESI.FastFoodESI.service.admin.ProductoService;
 import com.ESI.FastFoodESI.ui.layouts.admin.PropietarioMainLayout;
 import com.vaadin.flow.component.Component;
@@ -13,42 +16,56 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.router.BeforeEvent;
+import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.RolesAllowed;
 import org.springframework.context.annotation.Lazy;
 
+import java.util.UUID;
+
 @Route(value = "admin/productos", layout = PropietarioMainLayout.class)
 @PageTitle("Gestión de Carta | Admin")
 @RolesAllowed("PROPIETARIO")
-public class ProductosView extends VerticalLayout {
+public class ProductosView extends VerticalLayout implements HasUrlParameter<UUID> {
 
     private final ProductoService service;
+    private final NegocioService negocioService;
+    // Ya no necesitamos CartaRepository aquí directamente porque lo usa el servicio
     private final ProductoForm form;
     private final Grid<Producto> grid = new Grid<>(Producto.class);
     private final Dialog dialog = new Dialog();
+    private Negocio negocioActual;
 
-    // Inyección de dependencias
-    public ProductosView(ProductoService service, @Lazy ProductoForm form) {
+    public ProductosView(ProductoService service, NegocioService negocioService, @Lazy ProductoForm form) {
         this.service = service;
+        this.negocioService = negocioService;
         this.form = form;
 
         setSizeFull();
         configureGrid();
         configureDialog();
         
-        add(new H2("Nuestra Carta"), getToolbar(), grid);
-        updateList();
+        this.form.setOnSaveListener(this::updateList);
+
+        add(new H2("Gestión de Productos"), getToolbar(), grid);
+    }
+
+    @Override
+    public void setParameter(BeforeEvent event, UUID negocioId) {
+        this.negocioActual = negocioService.findById(negocioId);
+        if (negocioActual != null) {
+            updateList();
+        } else {
+            Notification.show("Negocio no encontrado").addThemeVariants(NotificationVariant.LUMO_ERROR);
+        }
     }
 
     private void configureGrid() {
         grid.setSizeFull();
-        grid.setColumns("nombre", "descripcion");
-        
-        grid.addColumn(p -> p.getImporte() + " €").setHeader("Precio").setSortable(true);
-        grid.addColumn(Producto::getStock).setHeader("Stock");
-        grid.addColumn(p -> p.getTipo() != null ? p.getTipo().getNombre() : "-").setHeader("Tipo");
-        
+        grid.setColumns("nombre", "descripcion", "stock");
+        grid.addColumn(p -> p.getImporte() + " €").setHeader("Precio");
         grid.addComponentColumn(this::createActions).setHeader("Acciones");
     }
     
@@ -60,7 +77,7 @@ public class ProductosView extends VerticalLayout {
     }
 
     private Component getToolbar() {
-        Button addBtn = new Button("Nuevo Producto", VaadinIcon.PLUS.create());
+        Button addBtn = new Button("Añadir Producto", VaadinIcon.PLUS.create());
         addBtn.addClickListener(e -> addProducto());
         addBtn.addThemeVariants(com.vaadin.flow.component.button.ButtonVariant.LUMO_PRIMARY);
         return new HorizontalLayout(addBtn);
@@ -72,12 +89,21 @@ public class ProductosView extends VerticalLayout {
     }
 
     public void updateList() {
-        grid.setItems(service.findAll());
+        if (negocioActual != null) {
+            grid.setItems(service.findAllByNegocio(negocioActual));
+        }
     }
 
     private void addProducto() {
+        if (negocioActual == null) {
+            Notification.show("Error: No hay negocio seleccionado").addThemeVariants(NotificationVariant.LUMO_ERROR);
+            return;
+        }
         grid.asSingleSelect().clear();
-        form.setProducto(new Producto(), dialog);
+        Producto nuevo = new Producto();
+        nuevo.setNegocio(this.negocioActual);
+        
+        form.setProducto(nuevo, dialog);
         dialog.open();
     }
 
@@ -86,15 +112,20 @@ public class ProductosView extends VerticalLayout {
         dialog.open();
     }
 
+    // --- ARREGLO: USAR EL MÉTODO SEGURO DEL SERVICIO ---
     private void deleteProducto(Producto producto) {
         try {
-            service.delete(producto.getId());
+            // Llamamos al método transaccional que creamos en el Paso 1
+            service.deleteProductoSeguro(producto.getId());
+            
             updateList();
-            Notification.show("Producto eliminado", 3000, Notification.Position.BOTTOM_START)
-                .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            Notification.show("Eliminado correctamente").addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+
         } catch (Exception e) {
-             Notification.show("No se puede eliminar. ¿Tiene pedidos asociados?", 5000, Notification.Position.MIDDLE)
-                .addThemeVariants(NotificationVariant.LUMO_ERROR);
+             e.printStackTrace();
+             // Si falla, suele ser porque hay pedidos vinculados
+             Notification.show("No se puede eliminar: " + e.getMessage())
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
     }
 }

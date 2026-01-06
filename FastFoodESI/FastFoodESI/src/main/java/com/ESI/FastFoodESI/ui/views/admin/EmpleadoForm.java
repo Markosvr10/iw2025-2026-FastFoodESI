@@ -20,10 +20,14 @@ import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.BeanValidationBinder;
 import com.vaadin.flow.data.binder.Binder;
+import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.converter.StringToBigDecimalConverter;
 import com.vaadin.flow.spring.annotation.SpringComponent;
 import com.vaadin.flow.spring.annotation.UIScope;
+import org.springframework.dao.DataIntegrityViolationException;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @SpringComponent
@@ -33,13 +37,15 @@ public class EmpleadoForm extends VerticalLayout {
     private final EmpleadoService empleadoService;
     private final EstadoEmpleadoService estadoService;
     private final TurnoService turnoService;
-    
+
+    // Binder para validar y vincular datos
     private final Binder<Empleado> binder = new BeanValidationBinder<>(Empleado.class);
+    
     private Empleado currentEmpleado;
     private Dialog dialog;
-    private Runnable onSaveListener; 
+    private Runnable onSaveListener;
 
-    // Campos de Texto
+    // --- Campos de Texto ---
     private final TextField nombre = new TextField("Nombre");
     private final TextField apellido = new TextField("Apellido");
     private final TextField dni = new TextField("DNI");
@@ -48,14 +54,15 @@ public class EmpleadoForm extends VerticalLayout {
     private final TextField salario = new TextField("Salario");
     private final DatePicker fechaNac = new DatePicker("Fecha Nacimiento");
 
-    // Desplegables
+    // --- Desplegables ---
     private final Select<String> puestoSelector = new Select<>();
     private final Select<EstadoEmpleado> estado = new Select<>();
     private final Select<Turno> turno = new Select<>();
-    
-    // Negocio 
+
+    // --- Negocio ---
     private final ComboBox<Negocio> negocio = new ComboBox<>("Asignar a Negocio");
 
+    // --- Botones ---
     private final Button saveButton = new Button("Guardar");
     private final Button cancelButton = new Button("Cancelar");
 
@@ -66,40 +73,84 @@ public class EmpleadoForm extends VerticalLayout {
         this.estadoService = estadoService;
         this.turnoService = turnoService;
 
-        // Configuración visual
+        // Configuración visual de los selectores
         estado.setLabel("Estado");
         estado.setItemLabelGenerator(EstadoEmpleado::getNombre);
-        
+
         turno.setLabel("Turno");
         turno.setItemLabelGenerator(Turno::getNombre);
-        
+
         negocio.setItemLabelGenerator(Negocio::getNombre);
 
         puestoSelector.setLabel("Puesto / Cargo");
-        puestoSelector.setItems("Camarero", "Cocinero", "Repartidor"); 
+        puestoSelector.setItems("Camarero", "Cocinero", "Repartidor");
         puestoSelector.setPlaceholder("Selecciona un cargo...");
 
-        // Binding
-        binder.forField(nombre).withNullRepresentation("").bind(Empleado::getNombre, Empleado::setNombre);
-        binder.forField(apellido).withNullRepresentation("").bind(Empleado::getApellido, Empleado::setApellido);
-        binder.forField(dni).withNullRepresentation("").bind(Empleado::getDni, Empleado::setDni);
-        binder.forField(correo).withNullRepresentation("").bind(Empleado::getCorreo, Empleado::setCorreo);
-        binder.forField(telefono).withNullRepresentation("").bind(Empleado::getTelefono, Empleado::setTelefono);
-        binder.forField(fechaNac).bind(Empleado::getFechaNac, Empleado::setFechaNac);
-        
-        binder.forField(salario)
-            .withNullRepresentation("")
-            .withConverter(new StringToBigDecimalConverter("Introduce un número válido"))
-            .bind(Empleado::getSalario, Empleado::setSalario);
-            
-        binder.forField(estado).bind(Empleado::getEstado, Empleado::setEstado);
-        binder.forField(turno).bind(Empleado::getTurno, Empleado::setTurno);
+        // =========================================================
+        // CONFIGURACIÓN DE VALIDACIONES (BINDER)
+        // =========================================================
 
+        // Nombre: Obligatorio y longitud mínima
+        binder.forField(nombre)
+                .asRequired("El nombre es obligatorio")
+                .withValidator(name -> name.length() >= 2, "Debe tener al menos 2 letras")
+                .bind(Empleado::getNombre, Empleado::setNombre);
+
+        // Apellido: Obligatorio
+        binder.forField(apellido)
+                .asRequired("El apellido es obligatorio")
+                .withValidator(apell -> apell.length() >= 2, "Debe tener al menos 2 letras")
+                .bind(Empleado::getApellido, Empleado::setApellido);
+
+        // DNI: Obligatorio y formato (8 números y 1 letra)
+        binder.forField(dni)
+                .asRequired("El DNI es obligatorio")
+                .withValidator(d -> d.matches("^[0-9]{8}[A-Za-z]$"), "Formato incorrecto (Ej: 12345678Z)")
+                .bind(Empleado::getDni, Empleado::setDni);
+
+        // Correo: Obligatorio y formato Email
+        binder.forField(correo)
+                .asRequired("El correo es obligatorio")
+                .withValidator(email -> email.contains("@") && email.contains("."), "Introduce un email válido")
+                .bind(Empleado::getCorreo, Empleado::setCorreo);
+
+        // Teléfono: Opcional, pero si se pone, debe tener 9 dígitos
+        binder.forField(telefono)
+                .withValidator(t -> t == null || t.isEmpty() || t.matches("^[0-9]{9}$"), "El teléfono debe tener 9 dígitos")
+                .bind(Empleado::getTelefono, Empleado::setTelefono);
+
+        // Fecha Nacimiento: No puede ser en el futuro
+        binder.forField(fechaNac)
+                .withValidator(date -> date == null || date.isBefore(LocalDate.now()), "La fecha debe ser anterior a hoy")
+                .bind(Empleado::getFechaNac, Empleado::setFechaNac);
+
+        // Salario: Obligatorio, numérico y positivo
+        binder.forField(salario)
+                .asRequired("El salario es obligatorio")
+                .withNullRepresentation("")
+                .withConverter(new StringToBigDecimalConverter("Introduce un número válido (Ej: 1500.50)"))
+                .withValidator(s -> s.compareTo(BigDecimal.ZERO) > 0, "El salario debe ser mayor que 0")
+                .bind(Empleado::getSalario, Empleado::setSalario);
+
+        // Selectores de Objetos (Entidades)
+        binder.forField(estado)
+                .asRequired("Selecciona un estado")
+                .bind(Empleado::getEstado, Empleado::setEstado);
+
+        binder.forField(turno)
+                .asRequired("Selecciona un turno")
+                .bind(Empleado::getTurno, Empleado::setTurno);
+
+
+        // Construcción de la interfaz
         add(createFormLayout(), createButtonLayout());
 
+        // Eventos de botones
         saveButton.addClickListener(e -> validateAndSave());
         cancelButton.addClickListener(e -> closeForm());
     }
+
+    // --- Métodos de Configuración Externa ---
 
     public void setNegociosDisponibles(List<Negocio> negocios) {
         this.negocio.setItems(negocios);
@@ -109,19 +160,43 @@ public class EmpleadoForm extends VerticalLayout {
         this.onSaveListener = onSaveListener;
     }
 
+    // --- Creación de Layouts ---
+
     private Component createFormLayout() {
         FormLayout formLayout = new FormLayout();
-        nombre.setWidthFull(); apellido.setWidthFull(); dni.setWidthFull();
-        correo.setWidthFull(); telefono.setWidthFull(); salario.setWidthFull();
-        negocio.setWidthFull(); puestoSelector.setWidthFull();
-        estado.setWidthFull(); turno.setWidthFull();
-
-        formLayout.add(nombre, apellido, dni, correo, telefono, salario, fechaNac, 
-                       puestoSelector, estado, turno, negocio);
         
-        formLayout.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1), 
-                                      new FormLayout.ResponsiveStep("500px", 2));
+        // Configurar ancho completo para que se vea bien en el FormLayout
+        nombre.setWidthFull(); 
+        apellido.setWidthFull(); 
+        dni.setWidthFull();
+        correo.setWidthFull(); 
+        telefono.setWidthFull(); 
+        salario.setWidthFull();
+        negocio.setWidthFull(); 
+        puestoSelector.setWidthFull();
+        estado.setWidthFull(); 
+        turno.setWidthFull();
+        fechaNac.setWidthFull();
+
+        // Añadir componentes al layout
+        formLayout.add(
+            nombre, apellido, 
+            dni, correo, 
+            telefono, salario, 
+            fechaNac, puestoSelector, 
+            estado, turno, 
+            negocio
+        );
+
+        // Configuración responsive (1 columna en móvil, 2 en escritorio)
+        formLayout.setResponsiveSteps(
+            new FormLayout.ResponsiveStep("0", 1),
+            new FormLayout.ResponsiveStep("500px", 2)
+        );
+        
+        // Hacer que el selector de negocio ocupe todo el ancho (2 columnas)
         formLayout.setColspan(negocio, 2);
+        
         return formLayout;
     }
 
@@ -131,27 +206,33 @@ public class EmpleadoForm extends VerticalLayout {
         return new HorizontalLayout(saveButton, cancelButton);
     }
 
-    // --- CARGA DE DATOS  ---
+    // --- Carga de Datos (Al abrir el diálogo) ---
+
     public void setEmpleado(Empleado empleado, Dialog parentDialog) {
         this.currentEmpleado = empleado;
         this.dialog = parentDialog;
-        
-       
+
+        // Cargar listas actualizadas desde la BD
         estado.setItems(estadoService.findAll());
         turno.setItems(turnoService.findAll());
 
+        // Configurar el combo de Negocio
         if (empleado.getNegocio() != null) {
             negocio.setValue(empleado.getNegocio());
         } else {
             negocio.clear();
         }
 
-        binder.readBean(empleado); 
-        
+        // Leer los datos del objeto y ponerlos en el formulario
+        binder.readBean(empleado);
+
+        // Lógica para el selector de Puesto (Solo editable si es nuevo empleado)
         if (empleado.getId() != null) {
+            // Modo Edición: El puesto ya existe y no se suele cambiar para no romper la clase Java
             puestoSelector.setValue(empleado.getPuesto());
             puestoSelector.setReadOnly(true);
         } else {
+            // Modo Creación
             puestoSelector.clear();
             puestoSelector.setReadOnly(false);
         }
@@ -161,50 +242,83 @@ public class EmpleadoForm extends VerticalLayout {
         if (dialog != null) dialog.close();
     }
 
+    // --- Lógica Principal: Validación y Guardado ---
+
     private void validateAndSave() {
         try {
+            // 1. Validaciones manuales de componentes que no están en el Binder principal
             if (negocio.getValue() == null) {
                 Notification.show("Debes asignar un negocio", 3000, Notification.Position.MIDDLE)
-                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
                 return;
             }
+            
             if (currentEmpleado.getId() == null && puestoSelector.getValue() == null) {
-                 Notification.show("Debes seleccionar un Puesto", 3000, Notification.Position.MIDDLE)
-                     .addThemeVariants(NotificationVariant.LUMO_ERROR);
-                 return;
+                Notification.show("Debes seleccionar un Puesto", 3000, Notification.Position.MIDDLE)
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                return;
             }
 
+            // 2. Preparar la instancia correcta según el tipo de empleado (Polimorfismo)
             Empleado empleadoAGuardar;
             if (currentEmpleado.getId() != null) {
+                // Si ya existe, usamos el objeto actual
                 empleadoAGuardar = currentEmpleado;
             } else {
+                // Si es nuevo, creamos la instancia según el selector
                 String tipo = puestoSelector.getValue();
                 switch (tipo) {
-                    case "Cocinero": empleadoAGuardar = new Cocina(); break;
-                    case "Camarero": empleadoAGuardar = new Camarero(); break;
-                    case "Repartidor": empleadoAGuardar = new Repartidor(); break;
-                    default: empleadoAGuardar = new Empleado(); break;
+                    case "Cocinero":
+                        empleadoAGuardar = new Cocina();
+                        break;
+                    case "Camarero":
+                        empleadoAGuardar = new Camarero();
+                        break;
+                    case "Repartidor":
+                        empleadoAGuardar = new Repartidor();
+                        break;
+                    default:
+                        empleadoAGuardar = new Empleado();
+                        break;
                 }
             }
 
+            // 3. Escribir los datos del formulario en el objeto (Dispara validaciones del Binder)
+            // Si esto falla, saltará automáticamente al catch(ValidationException)
             binder.writeBean(empleadoAGuardar);
-            
+
+            // 4. Asignar relaciones manuales
             empleadoAGuardar.setNegocio(negocio.getValue());
             if (negocio.getValue().getPropietario() != null) {
                 empleadoAGuardar.setPropietario(negocio.getValue().getPropietario());
             }
 
+            // 5. Intentar guardar en base de datos
             empleadoService.save(empleadoAGuardar);
 
+            // ÉXITO
             Notification.show("Empleado guardado con éxito", 3000, Notification.Position.BOTTOM_START)
                     .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-            
+
             closeForm();
             if (onSaveListener != null) onSaveListener.run();
 
+        } catch (ValidationException ve) {
+            // ERROR DE VALIDACIÓN (Formulario)
+            // Los campos inválidos ya se habrán puesto rojos automáticamente.
+            Notification.show("Por favor, revisa los datos marcados en rojo.", 3000, Notification.Position.MIDDLE)
+                    .addThemeVariants(NotificationVariant.LUMO_WARNING);
+
+        } catch (DataIntegrityViolationException e) {
+            // ERROR DE BASE DE DATOS (Duplicados, Claves foráneas, etc.)
+            // Capturamos esto para no mostrar el error en inglés
+            Notification.show("Error: El DNI o el Correo ya están registrados en el sistema.", 5000, Notification.Position.MIDDLE)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+
         } catch (Exception e) {
-            e.printStackTrace();
-            Notification.show("Error al guardar: " + e.getMessage(), 5000, Notification.Position.MIDDLE)
+            // CUALQUIER OTRO ERROR IMPREVISTO
+            e.printStackTrace(); // Imprime el error en la consola del servidor para depurar
+            Notification.show("Ocurrió un error interno inesperado.", 5000, Notification.Position.MIDDLE)
                     .addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
     }

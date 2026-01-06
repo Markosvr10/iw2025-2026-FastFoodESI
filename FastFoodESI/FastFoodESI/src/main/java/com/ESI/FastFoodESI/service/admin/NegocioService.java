@@ -36,4 +36,8 @@ public class NegocioService {
     public void delete(Negocio negocio) {
         negocioRepository.delete(negocio);
     }
+
+    public Negocio findById(UUID id) {
+        return negocioRepository.findById(id).orElse(null);
+    }
 }

@@ -64,15 +64,15 @@ VALUES (random_uuid(), 'Cliente', 'Generico', '99999999X', 'clienteGenerico@esi.
 
 -- NEGOCIOS
 INSERT INTO negocios (id, nombre, direccion, telefono, correo, propietario_id) 
-VALUES (random_uuid(), 'Burgers ESI Centro', 'Calle Falsa 123', '911223344', 'burgers@esi.es',
+VALUES ('fa57f00d-e510-4000-ce11-000000000001', 'Burgers ESI Centro', 'Calle Falsa 123', '911223344', 'burgers@esi.es',
 (SELECT id FROM propietarios WHERE correo='admin@esi.es'));
 
 INSERT INTO negocios (id, nombre, direccion, telefono, propietario_id) 
-VALUES (random_uuid(), 'Burgers ESI Playa', 'Paseo Marítimo 1', '955667788', 
+VALUES ('fa57f00d-e510-4000-5ea1-000000000002', 'Burgers ESI Playa', 'Paseo Marítimo 1', '955667788',
 (SELECT id FROM propietarios WHERE correo='juan@esi.es'));
 
 INSERT INTO negocios (id, nombre, direccion, telefono, correo, propietario_id) 
-VALUES (random_uuid(), 'Pizzería Campus', 'Calle Aulario 5', '956222222', 'pizza@esi.es',
+VALUES ('fa57f00d-e510-4000-ca22-000000000003', 'Pizzería Campus', 'Calle Aulario 5', '956222222', 'pizza@esi.es',
 (SELECT id FROM propietarios WHERE correo='admin@esi.es'));
 
 -- ==========================================

@@ -62,18 +62,17 @@ VALUES (UUID(), 'Marta', 'Sánchez', '87654321B', 'martasan@esi.es', '600123458'
 INSERT INTO clientes (id, nombre, apellido, dni, correo, telefono, password, verificado)
 VALUES (UUID(), 'Cliente', 'Generico', '99999999X', 'clienteGenerico@esi.es', '00000000', '{noop}clientegenerico', true);
 
--- NEGOCIOS (Usamos UUIDs fijos para referenciarlos después si es necesario, o generados)
--- Nota: En tu script original usabas UUIDs fijos aquí, los mantengo para consistencia.
+-- NEGOCIOS (SOLO ESTOS TIENEN IDs FIJOS "FÁCILES")
 INSERT INTO negocios (id, nombre, direccion, telefono, correo, propietario_id) 
-VALUES ('fa57f00d-e510-4000-ce11-000000000001', 'Burgers ESI Centro', 'Calle Falsa 123', '911223344', 'burgers@esi.es',
+VALUES ('00000000-0000-0000-0000-000000000001', 'Burgers ESI Centro', 'Calle Falsa 123', '911223344', 'burgers@esi.es',
 (SELECT id FROM propietarios WHERE correo='admin@esi.es'));
 
 INSERT INTO negocios (id, nombre, direccion, telefono, propietario_id) 
-VALUES ('fa57f00d-e510-4000-5ea1-000000000002', 'Burgers ESI Playa', 'Paseo Marítimo 1', '955667788',
+VALUES ('00000000-0000-0000-0000-000000000002', 'Burgers ESI Playa', 'Paseo Marítimo 1', '955667788',
 (SELECT id FROM propietarios WHERE correo='juan@esi.es'));
 
 INSERT INTO negocios (id, nombre, direccion, telefono, correo, propietario_id) 
-VALUES ('fa57f00d-e510-4000-ca22-000000000003', 'Pizzería Campus', 'Calle Aulario 5', '956222222', 'pizza@esi.es',
+VALUES ('00000000-0000-0000-0000-000000000003', 'Pizzería Campus', 'Calle Aulario 5', '956222222', 'pizza@esi.es',
 (SELECT id FROM propietarios WHERE correo='admin@esi.es'));
 
 -- ==========================================

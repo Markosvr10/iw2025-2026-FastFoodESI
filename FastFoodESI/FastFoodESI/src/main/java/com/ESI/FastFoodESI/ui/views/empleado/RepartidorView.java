@@ -116,7 +116,7 @@ public class RepartidorView extends VerticalLayout {
             List<Pedido> pedidos = pedidoRepository.findByNegocio(negocioActivo);
 
             List<Pedido> filtrados = pedidos.stream()
-                    .filter(p -> "DOMICILIO".equalsIgnoreCase(p.getTipoEntrega()))
+                    .filter(p -> "A Domicilio".equalsIgnoreCase(p.getTipoEntrega()))
                     .filter(p -> p.getEstado() != null && !p.getEstado().getNombre().equals("ENTREGADO"))
                     .filter(p -> p.getEstado() != null && !p.getEstado().getNombre().equals("CANCELADO"))
                     .collect(Collectors.toList());

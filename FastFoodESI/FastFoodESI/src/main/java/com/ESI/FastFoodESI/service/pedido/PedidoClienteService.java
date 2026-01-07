@@ -48,7 +48,11 @@ public class PedidoClienteService {
         pedido.setEstado(estadoInicial);
 
         pedido.setTotal(BigDecimal.valueOf(carrito.calcularTotal()));
-
+        
+        if (!carrito.getLineas().isEmpty()) {
+            Negocio negocioDelPedido = carrito.getLineas().get(0).getProducto().getNegocio();
+            pedido.setNegocio(negocioDelPedido); 
+        }
         // Guardamos los datos nuevos
         pedido.setTipoEntrega(tipoEntrega);
         pedido.setMetodoPago(metodoPago);

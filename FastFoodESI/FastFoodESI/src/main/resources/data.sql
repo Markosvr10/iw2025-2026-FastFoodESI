@@ -47,18 +47,20 @@ VALUES (random_uuid(), 'Terminal', 'Establecimiento','00000000X', 'sistema_tpv',
 
 -- Clientes
 
-INSERT INTO clientes (id, nombre, apellido, dni, correo, telefono, password)
-VALUES (random_uuid(), 'Pepito', 'Perez', '87654321Z', 'cliente@esi.es', '600123456', '1234');
+-- CLIENTE 1: Pepito (El que usamos para probar)
+INSERT INTO clientes (id, nombre, apellido, dni, correo, telefono, password, verificado)
+VALUES (random_uuid(), 'Pepito', 'Perez', '87654321Z', 'cliente@esi.es', '600123456', '{noop}1234', true);
+
+-- OTROS CLIENTES
+INSERT INTO clientes (id, nombre, apellido, dni, correo, telefono, password, direccion, verificado)
+VALUES (random_uuid(), 'Alejandro', 'Fernández', '87654321A', 'alefdez@esi.es', '600123457', '{noop}12345', 'Calle Principal 123', true);
 
 INSERT INTO clientes (id, nombre, apellido, dni, correo, telefono, password, direccion, verificado)
-VALUES (random_uuid(), 'Alejandro', 'Fernández', '87654321A', 'alefdez@esi.es', '600123457', '12345', 'Calle Principal 123', true);
+VALUES (random_uuid(), 'Marta', 'Sánchez', '87654321B', 'martasan@esi.es', '600123458', '{noop}12345', 'Calle Cervantes 49', true);
 
-INSERT INTO clientes (id, nombre, apellido, dni, correo, telefono, password, direccion, verificado)
-VALUES (random_uuid(), 'Marta', 'Sánchez', '87654321B', 'martasan@esi.es', '600123458', '12345', 'Calle Cervantes 49', true);
-
--- CLIENTE GENERICO AL CUAL ASIGNARLES PEDIDOS EN RESTAURANTE
-INSERT INTO clientes (id, nombre, apellido, dni, correo, telefono, password)
-VALUES (random_uuid(), 'Cliente', 'Generico', '99999999X', 'clienteGenerico@esi.es', '00000000', 'clientegenerico');
+-- CLIENTE GENERICO (Para pedidos en local)
+INSERT INTO clientes (id, nombre, apellido, dni, correo, telefono, password, verificado)
+VALUES (random_uuid(), 'Cliente', 'Generico', '99999999X', 'clienteGenerico@esi.es', '00000000', '{noop}clientegenerico', true);
 
 -- NEGOCIOS
 INSERT INTO negocios (id, nombre, direccion, telefono, correo, propietario_id) 

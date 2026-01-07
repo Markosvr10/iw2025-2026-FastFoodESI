@@ -27,6 +27,7 @@ import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -112,7 +113,18 @@ public class CarritoView extends VerticalLayout {
         actualizarVista();
 
         Button btnSeguir = new Button("Seguir Pidiendo");
-        btnSeguir.addClickListener(e -> UI.getCurrent().navigate(""));
+        btnSeguir.addClickListener(e -> {
+            // Recuperamos la memoria de sesión
+            String ultimoNegocio = (String) VaadinSession.getCurrent().getAttribute("ULTIMO_NEGOCIO");
+
+            if (ultimoNegocio != null && !ultimoNegocio.isEmpty()) {
+                // Volvemos a la pizzería/hamburguesería donde estábamos
+                UI.getCurrent().navigate("carta/" + ultimoNegocio);
+            } else {
+                // Si no hay memoria, vamos a la general
+                UI.getCurrent().navigate("carta");
+            }
+        });
         btnSeguir.getStyle().set("margin-left", "auto");
 
         Button btnConfirmar = new Button("Confirmar Pedido", VaadinIcon.CHECK.create());
@@ -160,7 +172,7 @@ public class CarritoView extends VerticalLayout {
             selectTipo.setValue("Para llevar (Recoger)");
             selectTipo.setWidthFull();
 
-            //CAMPO DIRECCIÓN
+            // CAMPO DIRECCIÓN
             TextField txtDireccion = new TextField("Dirección de Entrega");
             txtDireccion.setWidthFull();
             txtDireccion.setPlaceholder("Calle, Número, Piso...");
@@ -250,7 +262,6 @@ public class CarritoView extends VerticalLayout {
             Button cancelar = new Button("Cancelar", event -> dialog.close());
             Cliente finalClienteReal = clienteReal;
 
-
             // boton confirmar y pagar
             Button btnPagar = new Button("Confirmar y Pagar " + String.format("%.2f €", carritoService.calcularTotal()),
                     event -> {
@@ -265,13 +276,12 @@ public class CarritoView extends VerticalLayout {
                         String direccionFinal = ""; // Por defecto vacía
                         if ("A Domicilio".equals(tipo)) {
                             if (txtDireccion.isEmpty()) {
-                                Notification.show("Debes escribir una dirección de entrega").addThemeVariants(NotificationVariant.LUMO_ERROR);
+                                Notification.show("Debes escribir una dirección de entrega")
+                                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
                                 return;
                             }
                             direccionFinal = txtDireccion.getValue();
                         }
-
-
 
                         if ("Tarjeta Bancaria".equals(metodo)) {
                             // Validar Tarjeta (16 dígitos y que no esté vacía)
@@ -308,7 +318,6 @@ public class CarritoView extends VerticalLayout {
 
                         if (!validacionCorrecta)
                             return;
-
 
                         try {
                             pedidoService.confirmarPedido(

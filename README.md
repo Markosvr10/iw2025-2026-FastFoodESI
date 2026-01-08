@@ -6,6 +6,26 @@ Este proyecto ha sido desarrollado como parte de la asignatura **Ingeniería Web
 
 ---
 
+
+## 👥 Equipo de Desarrollo
+
+¡Bienvenidos a nuestro proyecto! El equipo responsable de este desarrollo es:
+
+* **GRIÑÓN MARTÍNEZ, ÁLVARO**
+* **MORENO MENDOZA, SALVADOR**
+* **TARACENA NARANJO, LUIS**
+* **VICENTE RÍOS, MARCOS**
+
+
+## 📊 Rúbrica de Auto-evaluación
+
+Tal como se solicita en la entrega, aquí adjuntamos el enlace a nuestra hoja de auto-evaluación:
+
+👉 [**Ver Rúbrica de Auto-evaluación (Google Sheets)**](https://docs.google.com/spreadsheets/d/1UT-mN9gfvdz6uma9ZJ9gEq1FVZlbqfH2qur5RYvdE3k/edit?gid=1342898282#gid=1342898282)
+
+
+---
+
 ## 🚀 Descripción del Proyecto
 
 El sistema permite la administración centralizada de múltiples locales y tipos de cocina bajo una misma plataforma tecnológica.
@@ -64,7 +84,7 @@ Si deseas levantar el proyecto en tu máquina local para desarrollo:
 ### Pasos
 1.  **Clonar el repositorio:**
     ```bash
-    git clone [https://github.com/tu-usuario/FastFoodESI.git](https://github.com/tu-usuario/FastFoodESI.git)
+    git clone https://github.com/Markosvr10/iw2025-2026-FastFoodESI
     ```
 
 2.  **Acceder al directorio del proyecto:**
@@ -92,18 +112,10 @@ Si deseas levantar el proyecto en tu máquina local para desarrollo:
 
 La versión de producción está desplegada en la infraestructura de Amazon Web Services.
 
-🔗 **URL del Proyecto:** [http://fastfoodesi-env.eba-xxxx.us-east-1.elasticbeanstalk.com](http://fastfoodesi-env.eba-xxxx.us-east-1.elasticbeanstalk.com) 
+🔗 **URL del Proyecto:** [http://fastfoodesi-env.eba-kvujxyhf.us-east-1.elasticbeanstalk.com/](http://fastfoodesi-env.eba-kvujxyhf.us-east-1.elasticbeanstalk.com/) 
 
 > **Nota:** El despliegue se realiza sobre una instancia EC2 gestionada por Elastic Beanstalk, conectada a una base de datos RDS (MySQL).
 
----
-
-## 👥 Equipo de Desarrollo
-
-* **GRIÑÓN MARTÍNEZ, ÁLVARO**
-* **MORENO MENDOZA, SALVADOR**
-* **TARACENA NARANJO, LUIS**
-* **VICENTE RÍOS, MARCOS**
 
 ---
 *Ingeniería Web 2025-2026 - Universidad de Cádiz*
